@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Icono provisional: un prompt ">_" sobre el fondo oscuro de la app -->
+  <rect width="512" height="512" fill="#0f1419"/>
+  <path d="M170 186 L250 256 L170 326" fill="none" stroke="#6b8fb3" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M272 330 H346" fill="none" stroke="#d7dde4" stroke-width="30" stroke-linecap="round"/>
+</svg>
