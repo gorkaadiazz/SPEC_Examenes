@@ -1,0 +1,10 @@
+[
+  { "abreviatura": "SOR",  "nombre": "Sistemas Operativos en Red", "color": "#6b8fb3" },
+  { "abreviatura": "SI",   "nombre": "Seguridad Informática", "color": "#c08a72" },
+  { "abreviatura": "SR",   "nombre": "Servicios en Red", "color": "#8aa888" },
+  { "abreviatura": "AO",   "nombre": "Aplicaciones Ofimáticas", "color": "#d1b06b" },
+  { "abreviatura": "CNV",  "nombre": "Computación en la Nube y Virtualización (optativa)", "color": "#6fa8a6" },
+  { "abreviatura": "IPE2", "nombre": "Itinerario Personal para la Empleabilidad II", "color": "#9a8fb8" },
+  { "abreviatura": "PI",   "nombre": "Proyecto Intermodular", "color": "#b58a9f" },
+  { "abreviatura": "FE",   "nombre": "Formación en Empresa", "color": "#8f9aa6" }
+]
