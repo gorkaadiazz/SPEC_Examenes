@@ -8,9 +8,25 @@ const repo = crearRepo('modulos');
 const repoRA = crearRepo('resultados_aprendizaje');
 
 export const SISTEMAS_NOTAS = [
-  ['ra', 'Por Resultados de Aprendizaje (RA)'],
-  ['porcentajes', 'Porcentajes simples (exámenes y prácticas)'],
+  ['ra', 'Por RA'],
+  ['porcentajes', 'Por porcentajes'],
 ];
+
+// Colores para elegir al crear o editar un módulo: [color, nombre].
+export const PALETA = [
+  ['#3b6ff5', 'Azul'],
+  ['#ef4f5a', 'Coral'],
+  ['#12a37a', 'Verde'],
+  ['#f29d12', 'Ámbar'],
+  ['#0fb0c4', 'Turquesa'],
+  ['#8b5cf6', 'Violeta'],
+  ['#e85a9b', 'Rosa'],
+  ['#64748b', 'Pizarra'],
+];
+
+// Colores apagados de la primera versión -> colores nuevos (mismo orden).
+const COLORES_ANTIGUOS = ['#6b8fb3', '#c08a72', '#8aa888', '#d1b06b', '#6fa8a6', '#9a8fb8', '#b58a9f', '#8f9aa6'];
+const COLORES_NUEVOS = ['#3b6ff5', '#ef4f5a', '#12a37a', '#f29d12', '#0fb0c4', '#8b5cf6', '#e85a9b', '#64748b'];
 
 /** Todos los módulos, en el orden en que se crearon. */
 export async function listar() {
@@ -64,6 +80,11 @@ export async function borrar(id) {
  * (En la fase 3 pasará a hacerse en el primer inicio de sesión del usuario.)
  */
 export async function sembrarSiHaceFalta() {
+  await sembrar();
+  await actualizarColoresAntiguos();
+}
+
+async function sembrar() {
   if (await db.obtener('meta', 'modulos_sembrados')) return;
   if ((await db.contar('modulos')) === 0) {
     const resp = await fetch('./data/modulos-2smr.json');
@@ -78,4 +99,19 @@ export async function sembrarSiHaceFalta() {
     );
   }
   await db.tx(['meta'], 'readwrite', (t) => t.objectStore('meta').put({ clave: 'modulos_sembrados', valor: true }));
+}
+
+/**
+ * Una sola vez: los módulos que conserven un color de la paleta antigua
+ * (más apagada) pasan al color equivalente de la paleta nueva.
+ */
+async function actualizarColoresAntiguos() {
+  if (await db.obtener('meta', 'paleta_v2')) return;
+  const ops = [];
+  for (const m of await db.todos('modulos')) {
+    const i = COLORES_ANTIGUOS.indexOf(m.color);
+    if (i >= 0) ops.push({ tabla: 'modulos', op: 'upsert', fila: preparar({ ...m, color: COLORES_NUEVOS[i] }) });
+  }
+  await escribir(ops);
+  await db.tx(['meta'], 'readwrite', (t) => t.objectStore('meta').put({ clave: 'paleta_v2', valor: true }));
 }

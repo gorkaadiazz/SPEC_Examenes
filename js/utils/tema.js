@@ -1,4 +1,5 @@
-// Tema visual: 'auto' (según el sistema), 'oscuro' o 'claro'.
+// Tema visual: 'claro' (por defecto, la app se usa sobre todo de día),
+// 'oscuro' o 'auto' (según el sistema).
 // De momento se guarda en este dispositivo; en la fase 3 se sincronizará
 // también en la tabla `perfiles`.
 // Este archivo se carga como script normal en el <head> para aplicar el tema
@@ -9,15 +10,14 @@
 
   function leer() {
     try {
-      return localStorage.getItem(CLAVE) || 'auto';
+      return localStorage.getItem(CLAVE) || 'claro';
     } catch (e) {
-      return 'auto';
+      return 'claro';
     }
   }
 
   function aplicar(tema) {
-    if (tema === 'oscuro' || tema === 'claro') document.documentElement.setAttribute('data-tema', tema);
-    else document.documentElement.removeAttribute('data-tema');
+    document.documentElement.setAttribute('data-tema', tema);
   }
 
   function guardar(tema) {

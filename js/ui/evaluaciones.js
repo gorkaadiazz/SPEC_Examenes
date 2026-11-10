@@ -1,149 +1,177 @@
-// Evaluaciones: tarjeta, lista completa con filtros y formulario de alta/edición.
+// Evaluaciones: publicaciones del feed, lista completa y formulario.
 
-import { h, selector, campo, abrirDialogo, enlaceSeguro } from '../utils/dom.js';
-import { cuentaAtras, diasHasta, formatoFecha, aInputLocal, deInputLocal } from '../utils/fechas.js';
+import { h, poner, campo, opciones, abrirHoja, enlaceSeguro } from '../utils/dom.js';
+import { cuandoCorto, diasHasta, diaSemana, fechaCorta, hora, aInputs, deInputs } from '../utils/fechas.js';
 import { porcentajePreparado } from '../utils/progreso.js';
 import * as repoModulos from '../repos/modulos.js';
 import * as repo from '../repos/evaluaciones.js';
 import { TIPOS, PERIODOS, ESTADOS, etiqueta } from '../repos/evaluaciones.js';
+import { icono } from './iconos.js';
 
-/** Tarjeta de una evaluación. Al pulsarla se abre para editar. */
-export function tarjeta(ev, modulo, temas, ahora = new Date()) {
-  const pct = porcentajePreparado(temas);
-  const dias = diasHasta(ev.fecha, ahora);
-  const esPendiente = ev.estado === 'pendiente';
+/** Avatar redondo de un módulo con su abreviatura. */
+export function avatar(modulo, extra = '') {
+  return h('span', { class: `avatar ${extra}`, style: modulo ? `--c:${modulo.color}` : null, 'aria-hidden': 'true' }, modulo?.abreviatura ?? '?');
+}
+
+/** Pastilla con cuánto falta (o el estado si ya no está pendiente). */
+export function pastilla(ev, ahora = new Date()) {
+  if (ev.estado !== 'pendiente') return h('span', { class: `pastilla ${ev.estado}` }, ev.nota != null ? `${ev.nota}` : etiqueta(ESTADOS, ev.estado));
   const pasada = new Date(ev.fecha) < ahora;
-  const claseCuenta = !esPendiente ? '' : pasada ? 'pasada' : dias <= 1 ? 'urgente' : '';
+  const dias = diasHasta(ev.fecha, ahora);
+  return h('span', { class: `pastilla ${pasada ? 'pasada' : dias <= 1 ? 'urgente' : ''}` }, cuandoCorto(ev.fecha, ahora));
+}
 
+/** Una evaluación como fila del feed. Al pulsarla se abre para editar. */
+export function publicacion(ev, modulo, temas, { conFecha = false, ahora = new Date() } = {}) {
+  const pct = porcentajePreparado(temas);
+  const meta = [etiqueta(TIPOS, ev.tipo), conFecha ? `${fechaCorta(ev.fecha)}, ${hora(ev.fecha)}` : hora(ev.fecha)].join(' · ');
   return h(
     'button',
-    { type: 'button', class: 'tarjeta evaluacion', style: `--color-modulo:${modulo?.color ?? ''}`, onclick: () => abrirFormulario(ev) },
+    { type: 'button', class: 'publicacion', style: modulo ? `--c:${modulo.color}` : null, onclick: () => abrirFormulario(ev) },
+    avatar(modulo),
     h(
       'span',
-      { class: 'fila separa' },
-      h('span', { class: 'fila' }, h('span', { class: 'etiqueta' }, `[${modulo?.abreviatura ?? '?'}]`), h('span', { class: 'tenue pequeno' }, etiqueta(TIPOS, ev.tipo))),
-      esPendiente ? h('span', { class: `cuenta ${claseCuenta}` }, cuentaAtras(ev.fecha, ahora)) : h('span', { class: `chip ${ev.estado}` }, etiqueta(ESTADOS, ev.estado)),
+      { class: 'cuerpo' },
+      h('span', { class: 'titulo' }, ev.titulo),
+      h('span', { class: 'meta' }, meta),
+      pct != null && ev.estado === 'pendiente' ? h('span', { class: 'barra', role: 'img', 'aria-label': `${pct} % estudiado` }, h('span', { style: `width:${pct}%` })) : null,
     ),
-    h('span', { class: 'titulo' }, ev.titulo),
-    h(
-      'span',
-      { class: 'fila separa' },
-      h('span', { class: 'mono pequeno tenue' }, formatoFecha(ev.fecha)),
-      ev.nota != null ? h('span', { class: 'mono pequeno' }, `nota ${ev.nota}`) : null,
-    ),
-    pct != null
-      ? h('span', { class: 'progreso' }, h('span', { class: 'barra' }, h('span', { style: `width:${pct}%` })), `${pct}% preparado`)
-      : null,
+    pastilla(ev, ahora),
   );
 }
 
-// Filtros de la lista (se conservan mientras la app esté abierta)
-const filtro = { modulo: '', estado: 'pendiente' };
+/** Agrupa evaluaciones por día y devuelve los bloques del feed. */
+export function feedPorDias(lista, porId, temas, ahora = new Date()) {
+  const dias = new Map();
+  for (const ev of lista) {
+    const clave = new Date(ev.fecha).toDateString();
+    if (!dias.has(clave)) dias.set(clave, []);
+    dias.get(clave).push(ev);
+  }
+  return [...dias.values()].map((evs) => {
+    const n = diasHasta(evs[0].fecha, ahora);
+    const pista = n === 0 ? 'hoy' : n === 1 ? 'mañana' : null;
+    return h(
+      'section',
+      { class: 'dia' },
+      h('h3', {}, diaSemana(evs[0].fecha), pista ? h('span', {}, ` · ${pista}`) : null),
+      h('div', { class: 'grupo' }, evs.map((ev) => publicacion(ev, porId.get(ev.modulo_id), temas.get(ev.id), { ahora }))),
+    );
+  });
+}
 
-/** Pantalla "Todas las evaluaciones". */
+// Filtros de la lista completa (se conservan mientras la app esté abierta)
+const filtro = { estado: 'pendiente' };
+
+/** Pantalla "Evaluaciones": todo, con filtro por estado. */
 export async function render(cont) {
   const [modulos, lista, temas] = await Promise.all([repoModulos.listar(), repo.listar(), repo.temasPorEvaluacion()]);
   const porId = new Map(modulos.map((m) => [m.id, m]));
-  const visibles = lista.filter((e) => (!filtro.modulo || e.modulo_id === filtro.modulo) && (!filtro.estado || e.estado === filtro.estado));
-  // Las ya hechas se ven mejor de la más reciente a la más antigua.
-  if (filtro.estado !== 'pendiente') visibles.reverse();
+  const visibles = lista.filter((e) => !filtro.estado || e.estado === filtro.estado);
+  if (filtro.estado !== 'pendiente') visibles.reverse(); // lo hecho, de lo más reciente a lo más antiguo
 
-  const alCambiar = (clave) => (e) => {
-    filtro[clave] = e.target.value;
+  const filtros = opciones('Mostrar', 'filtro-estado', [['pendiente', 'Pendientes'], ['', 'Todas'], ['aprobado', 'Aprobadas'], ['suspendido', 'Suspendidas']], filtro.estado, 'segmentos');
+  filtros.querySelector('legend').classList.add('oculto');
+  filtros.addEventListener('change', (e) => {
+    filtro.estado = e.target.value;
     window.dispatchEvent(new HashChangeEvent('hashchange'));
-  };
+  });
 
-  cont.append(
-    h('div', { class: 'cabecera' }, h('h1', {}, 'Evaluaciones'), h('button', { type: 'button', class: 'boton primario', onclick: () => abrirFormulario() }, '+ Nueva')),
-    h(
-      'div',
-      { class: 'dos' },
-      campo('Módulo', selector({ onchange: alCambiar('modulo') }, [['', 'Todos'], ...modulos.map((m) => [m.id, `${m.abreviatura} · ${m.nombre}`])], filtro.modulo)),
-      campo('Estado', selector({ onchange: alCambiar('estado') }, [['', 'Todos'], ...ESTADOS], filtro.estado)),
-    ),
+  poner(
+    cont,
+    h('header', { class: 'cabecera' }, h('h1', {}, 'Evaluaciones'), h('button', { type: 'button', class: 'boton primario', onclick: () => abrirFormulario() }, icono('mas'), 'Nueva')),
+    filtros,
     visibles.length
-      ? h('div', { class: 'lista' }, visibles.map((e) => tarjeta(e, porId.get(e.modulo_id), temas.get(e.id))))
-      : h('p', { class: 'vacio' }, lista.length ? 'Nada con estos filtros.' : 'Todavía no hay evaluaciones. Crea la primera con «+ Nueva».'),
+      ? h(
+          'div',
+          { class: 'grupo' },
+          visibles.map((e) => publicacion(e, porId.get(e.modulo_id), temas.get(e.id), { conFecha: true })),
+        )
+      : h('div', { class: 'vacio' }, icono('evaluaciones'), h('h3', {}, lista.length ? 'Nada por aquí' : 'Aún no hay evaluaciones'), h('p', {}, lista.length ? 'Prueba con otro filtro.' : 'Apunta tu próximo examen o entrega con el botón +.')),
   );
 }
 
-/** Fila editable de un tema dentro del formulario. */
+/** Fila editable de un tema (casilla + texto + quitar). */
 function filaTema(tema = {}) {
   const fila = h(
     'div',
     { class: 'renglon', 'data-id': tema.id ?? null },
-    h('input', { type: 'checkbox', checked: !!tema.estudiado, 'aria-label': 'Estudiado' }),
-    h('input', { type: 'text', value: tema.texto ?? '', placeholder: 'Tema o apartado', 'aria-label': 'Tema', maxlength: 200 }),
-    h('button', { type: 'button', class: 'boton fantasma', 'aria-label': 'Quitar tema', onclick: () => fila.remove() }, '✕'),
+    h('input', { type: 'checkbox', class: 'casilla', checked: !!tema.estudiado, 'aria-label': 'Estudiado' }),
+    h('input', { type: 'text', value: tema.texto ?? '', 'aria-label': 'Tema', maxlength: 200 }),
+    h('button', { type: 'button', class: 'boton redondo', 'aria-label': 'Quitar tema', onclick: () => fila.remove() }, icono('cerrar')),
   );
   return fila;
 }
 
-/** Abre el formulario para crear (sin argumentos) o editar una evaluación. */
+/**
+ * Abre el formulario para crear (sin argumentos) o editar una evaluación.
+ * `valoresIniciales` permite precargar campos (p. ej. el módulo elegido).
+ */
 export async function abrirFormulario(ev = null, valoresIniciales = {}) {
   const modulos = await repoModulos.listar();
   if (!modulos.length) {
-    alert('Primero crea al menos un módulo (Más → Módulos).');
+    alert('Primero crea al menos un módulo (pestaña Tú).');
     return;
   }
   const temas = ev ? await repo.listarTemas(ev.id) : [];
   // Por defecto: mañana a las 08:30
   const porDefecto = new Date(Date.now() + 86_400_000);
   porDefecto.setHours(8, 30, 0, 0);
-  const v = { tipo: 'examen_teorico', evaluacion: '1', estado: 'pendiente', fecha: porDefecto.toISOString(), ...valoresIniciales, ...(ev ?? {}) };
+  const v = { tipo: 'examen_teorico', evaluacion: '1', estado: 'pendiente', fecha: porDefecto.toISOString(), modulo_id: modulos[0].id, ...valoresIniciales, ...(ev ?? {}) };
+  const { fecha, hora: horaInicial } = aInputs(v.fecha);
 
-  const listaTemas = h('div', { class: 'lista' }, temas.map(filaTema));
+  const listaTemas = h('div', { class: 'lista-edit' }, temas.map(filaTema));
+  const nuevoTema = h('input', { type: 'text', placeholder: 'Añade un tema y pulsa Intro', 'aria-label': 'Nuevo tema', maxlength: 200, onkeydown: (e) => e.key === 'Enter' && (e.preventDefault(), anadirTema()) });
   const error = h('p', { class: 'error', role: 'alert' });
 
   const form = h(
     'form',
-    { class: 'formulario', onsubmit: guardar },
-    campo('Título', h('input', { name: 'titulo', type: 'text', value: v.titulo ?? '', required: true, maxlength: 120, placeholder: 'p. ej. Examen UD3: DHCP y DNS' })),
+    { class: 'formulario', onsubmit: guardar, novalidate: true },
+    h('input', { name: 'titulo', type: 'text', class: 'grande', value: v.titulo ?? '', maxlength: 120, placeholder: '¿Qué tienes?', 'aria-label': 'Título' }),
+    opciones('Módulo', 'modulo_id', modulos.map((m) => ({ valor: m.id, texto: m.abreviatura, color: m.color })), v.modulo_id),
+    opciones('Tipo', 'tipo', TIPOS, v.tipo),
+    h('div', { class: 'dos' }, campo('Día', h('input', { name: 'fecha', type: 'date', value: fecha })), campo('Hora', h('input', { name: 'hora', type: 'time', value: horaInicial }))),
+    h('fieldset', {}, h('legend', {}, 'Temas que entran'), listaTemas, h('div', { class: 'anadir' }, nuevoTema, h('button', { type: 'button', class: 'boton', onclick: anadirTema }, 'Añadir')), h('p', { class: 'ayuda' }, 'Marca cada tema cuando lo tengas estudiado.')),
+    opciones('Evaluación', 'evaluacion', PERIODOS, v.evaluacion, 'segmentos'),
+    opciones('Estado', 'estado', ESTADOS, v.estado, 'segmentos'),
     h(
       'div',
       { class: 'dos' },
-      campo('Módulo', selector({ name: 'modulo_id', required: true }, modulos.map((m) => [m.id, `${m.abreviatura} · ${m.nombre}`]), v.modulo_id)),
-      campo('Tipo', selector({ name: 'tipo' }, TIPOS, v.tipo)),
-      campo('Fecha y hora', h('input', { name: 'fecha', type: 'datetime-local', value: aInputLocal(v.fecha), required: true })),
-      campo('Evaluación', selector({ name: 'evaluacion' }, PERIODOS, v.evaluacion)),
-      campo('Estado', selector({ name: 'estado' }, ESTADOS, v.estado)),
-      campo('Nota (0-10)', h('input', { name: 'nota', type: 'number', min: 0, max: 10, step: 0.01, inputmode: 'decimal', value: v.nota ?? '' })),
+      campo('Nota', h('input', { name: 'nota', type: 'number', min: 0, max: 10, step: 0.01, inputmode: 'decimal', value: v.nota ?? '', placeholder: '0 – 10' })),
+      campo('Enlace', h('input', { name: 'enlace', type: 'url', value: v.enlace ?? '', placeholder: 'https://' })),
     ),
-    h(
-      'fieldset',
-      {},
-      h('legend', {}, 'Temas que entran (marca lo estudiado)'),
-      listaTemas,
-      h('div', {}, h('button', { type: 'button', class: 'boton', onclick: anadirTema }, '+ Añadir tema')),
-    ),
-    campo('Enlace (aula virtual, enunciado…)', h('input', { name: 'enlace', type: 'url', value: v.enlace ?? '', placeholder: 'https://' })),
-    campo('Notas', h('textarea', { name: 'notas', maxlength: 2000 }, v.notas ?? '')),
-    h('p', { class: 'tenue pequeno' }, 'Los RA que evalúa y los PDF del temario se añadirán en las fases 4 y 6.'),
+    campo('Notas', h('textarea', { name: 'notas', maxlength: 2000, placeholder: 'Lo que entra, material, lo que dijo el profe…' }, v.notas ?? '')),
     error,
     h(
       'div',
-      { class: 'acciones' },
-      ev ? h('button', { type: 'button', class: 'boton peligro izquierda', onclick: borrar }, 'Borrar') : null,
-      h('button', { type: 'button', class: 'boton', onclick: () => dialogo.close() }, 'Cancelar'),
-      h('button', { type: 'submit', class: 'boton primario' }, 'Guardar'),
+      { class: 'hoja-pie' },
+      ev ? h('button', { type: 'button', class: 'boton peligro redondo', 'aria-label': 'Borrar evaluación', onclick: borrar }, icono('papelera')) : null,
+      h('button', { type: 'submit', class: 'boton primario' }, ev ? 'Guardar cambios' : 'Publicar'),
     ),
   );
-  const dialogo = abrirDialogo(ev ? 'Editar evaluación' : 'Nueva evaluación', form);
+  const hoja = abrirHoja(ev ? 'Editar' : 'Nueva evaluación', form);
+  if (!ev) form.titulo.focus();
 
   function anadirTema() {
-    const fila = filaTema();
-    listaTemas.append(fila);
-    fila.querySelector('input[type="text"]').focus();
+    const texto = nuevoTema.value.trim();
+    if (!texto) return;
+    listaTemas.append(filaTema({ texto }));
+    nuevoTema.value = '';
+    nuevoTema.focus();
   }
 
   async function guardar(e) {
     e.preventDefault();
+    anadirTema(); // por si escribió un tema y no pulsó "Añadir"
     const d = new FormData(form);
+    const titulo = d.get('titulo').trim();
     const enlace = d.get('enlace').trim();
-    if (enlace && !enlaceSeguro(enlace)) {
-      error.textContent = 'El enlace tiene que empezar por http:// o https://';
-      return;
-    }
+    const nota = d.get('nota');
+    if (!titulo) return mostrarError('Ponle un título.', form.titulo);
+    if (!d.get('fecha')) return mostrarError('Elige el día.', form.fecha);
+    if (enlace && !enlaceSeguro(enlace)) return mostrarError('El enlace tiene que empezar por http:// o https://', form.enlace);
+    if (nota !== '' && !(Number(nota) >= 0 && Number(nota) <= 10)) return mostrarError('La nota va de 0 a 10.', form.nota);
+
     const nuevosTemas = [...listaTemas.children]
       .map((fila) => ({
         ...(temas.find((t) => t.id === fila.dataset.id) ?? {}),
@@ -155,28 +183,33 @@ export async function abrirFormulario(ev = null, valoresIniciales = {}) {
       await repo.guardar(
         {
           ...(ev ?? {}),
-          titulo: d.get('titulo').trim(),
+          titulo,
           modulo_id: d.get('modulo_id'),
           tipo: d.get('tipo'),
-          fecha: deInputLocal(d.get('fecha')),
+          fecha: deInputs(d.get('fecha'), d.get('hora')),
           evaluacion: d.get('evaluacion'),
           estado: d.get('estado'),
-          nota: d.get('nota') === '' ? null : Number(d.get('nota')),
+          nota: nota === '' ? null : Number(nota),
           enlace: enlace ? enlaceSeguro(enlace) : null,
           notas: d.get('notas').trim(),
         },
         nuevosTemas,
       );
-      dialogo.close();
+      hoja.close();
     } catch (err) {
       console.error(err);
-      error.textContent = `No se ha podido guardar: ${err.message}`;
+      mostrarError(`No se ha podido guardar: ${err.message}`);
     }
+  }
+
+  function mostrarError(texto, campoConError) {
+    error.textContent = texto;
+    campoConError?.focus();
   }
 
   async function borrar() {
     if (!confirm(`¿Borrar «${ev.titulo}»? No se puede deshacer.`)) return;
     await repo.borrar(ev.id);
-    dialogo.close();
+    hoja.close();
   }
 }
