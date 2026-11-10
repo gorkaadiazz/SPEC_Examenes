@@ -45,7 +45,7 @@ export function render(cont, mensajeError = null) {
       'section',
       { class: 'login' },
       adorno,
-      h('h1', {}, 'Exámenes', h('br'), h('span', {}, '2º SMR')),
+      h('h1', {}, 'Exámenes', h('span', {}, '2º SMR')),
       h('p', { class: 'suave' }, 'Tus exámenes, entregas, apuntes y notas, en el móvil y en el PC.'),
       hueco,
       error,

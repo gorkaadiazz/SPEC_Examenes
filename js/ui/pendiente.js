@@ -7,8 +7,8 @@ export function pendiente(titulo, nombreIcono, descripcion) {
   return (cont) => {
     poner(
       cont,
-      h('header', { class: 'cabecera' }, h('h1', {}, titulo)),
-      h('div', { class: 'vacio' }, icono(nombreIcono), h('h3', {}, 'Muy pronto'), h('p', {}, descripcion)),
+      h('header', { class: 'barra-superior' }, h('h1', { class: 'titulo-pantalla' }, titulo)),
+      h('div', { class: 'vacio' }, h('span', { class: 'vacio-icono' }, icono(nombreIcono)), h('h2', {}, 'Muy pronto'), h('p', {}, descripcion)),
     );
   };
 }

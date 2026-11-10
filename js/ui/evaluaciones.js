@@ -45,6 +45,57 @@ export function publicacion(ev, modulo, temas, { conFecha = false, ahora = new D
   );
 }
 
+/**
+ * Una evaluación como publicación del feed:
+ *  cabecera (módulo y cuándo) · "imagen" en el color del módulo con el título ·
+ *  acciones · cuánto llevas estudiado · temas que entran.
+ */
+export function post(ev, modulo, temas = [], nApuntes = 0, ahora = new Date()) {
+  const pct = porcentajePreparado(temas);
+  const dias = diasHasta(ev.fecha, ahora);
+  const abrir = () => abrirFormulario(ev);
+  const pendientesDeEstudiar = temas.filter((t) => !t.estudiado).map((t) => t.texto);
+  return h(
+    'article',
+    { class: 'post', style: modulo ? `--c:${modulo.color}` : null },
+    h(
+      'header',
+      { class: 'post-cabecera' },
+      avatar(modulo),
+      h('div', { class: 'post-autor' }, h('b', {}, modulo?.nombre ?? 'Sin módulo'), h('span', {}, etiqueta(TIPOS, ev.tipo))),
+      h('span', { class: `post-cuando ${dias <= 1 ? 'urgente' : ''}` }, cuandoCorto(ev.fecha, ahora)),
+    ),
+    h(
+      'button',
+      { type: 'button', class: 'post-imagen', onclick: abrir, 'aria-label': `Abrir ${ev.titulo}` },
+      h('span', { class: 'post-ilu', 'aria-hidden': 'true' }, ilustracion(modulo?.imagen)),
+      h('span', { class: 'post-titulo' }, ev.titulo),
+      h('span', { class: 'post-fecha' }, `${diaSemana(ev.fecha)} · ${hora(ev.fecha)}`),
+    ),
+    h(
+      'div',
+      { class: 'post-acciones' },
+      h('button', { type: 'button', class: 'accion', onclick: abrir, 'aria-label': 'Marcar temas estudiados' }, icono('temas'), temas.length ? h('span', {}, `${temas.length - pendientesDeEstudiar.length}/${temas.length}`) : null),
+      h('button', { type: 'button', class: 'accion', onclick: abrir, 'aria-label': 'Apuntes' }, icono('clip'), nApuntes ? h('span', {}, String(nApuntes)) : null),
+      h('button', { type: 'button', class: 'accion fin', onclick: abrir, 'aria-label': 'Editar' }, icono('editar')),
+    ),
+    pct != null
+      ? h('div', { class: 'post-progreso' }, h('b', {}, `${pct} % estudiado`), h('span', { class: 'barra', role: 'img', 'aria-label': `${pct} % estudiado` }, h('span', { style: `transform:scaleX(${pct / 100})` })))
+      : null,
+    h(
+      'p',
+      { class: 'post-texto' },
+      h('b', {}, modulo?.abreviatura ?? ''),
+      ' ',
+      temas.length
+        ? pendientesDeEstudiar.length
+          ? `Te queda: ${pendientesDeEstudiar.join(', ')}`
+          : 'Todos los temas estudiados.'
+        : h('button', { type: 'button', class: 'enlace', onclick: abrir }, 'Añade los temas que entran'),
+    ),
+  );
+}
+
 /** Agrupa evaluaciones por día y devuelve los bloques del feed. */
 export function feedPorDias(lista, porId, temas, ahora = new Date()) {
   const dias = new Map();
@@ -84,7 +135,7 @@ export async function render(cont) {
 
   poner(
     cont,
-    h('header', { class: 'cabecera' }, h('h1', {}, 'Evaluaciones'), h('button', { type: 'button', class: 'boton primario', onclick: () => abrirFormulario() }, icono('mas'), 'Nueva')),
+    h('header', { class: 'barra-superior' }, h('h1', { class: 'titulo-pantalla' }, 'Evaluaciones'), h('button', { type: 'button', class: 'boton-icono', onclick: () => abrirFormulario(), 'aria-label': 'Nueva evaluación', title: 'Nueva evaluación' }, icono('crear'))),
     filtros,
     visibles.length
       ? h(
@@ -92,7 +143,7 @@ export async function render(cont) {
           { class: 'grupo' },
           visibles.map((e) => publicacion(e, porId.get(e.modulo_id), temas.get(e.id), { conFecha: true })),
         )
-      : h('div', { class: 'vacio' }, icono('evaluaciones'), h('h3', {}, lista.length ? 'Nada por aquí' : 'Aún no hay evaluaciones'), h('p', {}, lista.length ? 'Prueba con otro filtro.' : 'Apunta tu próximo examen o entrega con el botón +.')),
+      : h('div', { class: 'vacio' }, h('span', { class: 'vacio-icono' }, icono('evaluaciones')), h('h2', {}, lista.length ? 'Nada por aquí' : 'Aún no hay evaluaciones'), h('p', {}, lista.length ? 'Prueba con otro filtro.' : 'Apunta tu próximo examen o entrega con el botón +.')),
   );
 }
 

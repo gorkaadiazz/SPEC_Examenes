@@ -16,7 +16,7 @@ export function render(cont) {
 
   poner(
     cont,
-    h('header', { class: 'cabecera' }, h('h1', {}, 'Ajustes')),
+    h('header', { class: 'barra-superior' }, h('h1', { class: 'titulo-pantalla' }, 'Ajustes')),
 
     h('section', { class: 'seccion' }, h('h2', {}, 'Apariencia'), tema, h('p', { class: 'ayuda' }, 'Automático sigue al modo claro u oscuro del móvil.')),
 

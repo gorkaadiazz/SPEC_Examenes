@@ -1,18 +1,17 @@
-// Pantalla de inicio: historias de los módulos, lo siguiente en grande y el
-// resto de la semana agrupado por días.
+// Pantalla de inicio, como el feed de una red social:
+//  barra superior · historias de los módulos · lo de esta semana como
+//  publicaciones · lo que viene más adelante en una lista compacta.
 
 import { h, poner } from '../utils/dom.js';
-import { cuandoLargo, diasHasta, fechaLarga, hora, saludo } from '../utils/fechas.js';
-import { porcentajePreparado } from '../utils/progreso.js';
+import { diasHasta } from '../utils/fechas.js';
 import * as repoModulos from '../repos/modulos.js';
 import * as repo from '../repos/evaluaciones.js';
-import { TIPOS, etiqueta } from '../repos/evaluaciones.js';
-import { avatar, feedPorDias, abrirFormulario } from './evaluaciones.js';
-import { icono } from './iconos.js';
-import { ilustracion } from './ilustraciones.js';
 import * as repoArchivos from '../repos/archivos.js';
+import { avatar, post, publicacion, abrirFormulario } from './evaluaciones.js';
+import { icono } from './iconos.js';
 
 const DIAS_PROXIMO = 7;
+const MAS_ADELANTE = 5; // cuántas se enseñan en "Más adelante"
 let moduloFiltrado = null; // id del módulo cuya "historia" está pulsada
 
 /** Indicador de sincronización (lo actualiza app.js con cada cambio de estado). */
@@ -26,7 +25,17 @@ function historias(modulos, proximas, repintar) {
   const historia = (id, nombre, circulo, n, color, i) =>
     h(
       'button',
-      { type: 'button', class: 'historia', style: `${color ? `--c:${color};` : ''}--i:${i}`, 'aria-pressed': String(moduloFiltrado === id), 'aria-label': id ? `${nombre}: ${n} esta semana` : 'Ver todos los módulos', onclick: () => { moduloFiltrado = moduloFiltrado === id ? null : id; repintar(); } },
+      {
+        type: 'button',
+        class: 'historia',
+        style: `${color ? `--c:${color};` : ''}--i:${i}`,
+        'aria-pressed': String(moduloFiltrado === id),
+        'aria-label': id ? `${nombre}: ${n} esta semana` : 'Ver todos los módulos',
+        onclick: () => {
+          moduloFiltrado = moduloFiltrado === id ? null : id;
+          repintar();
+        },
+      },
       h('span', { class: 'marco' }, h('span', { class: `anillo ${n ? 'activo' : ''}` }, circulo), n ? h('span', { class: 'contador' }, String(n)) : null),
       h('span', { class: 'nombre' }, nombre),
     );
@@ -38,38 +47,20 @@ function historias(modulos, proximas, repintar) {
   );
 }
 
-/** La publicación grande: lo siguiente que tienes. */
-function destacada(ev, modulo, temas, nApuntes, ahora) {
-  const pct = porcentajePreparado(temas);
-  const hechos = temas?.filter((t) => t.estudiado).length ?? 0;
-  return h(
-    'button',
-    { type: 'button', class: 'destacada', style: `--c:${modulo?.color ?? '#888'}`, onclick: () => abrirFormulario(ev) },
-    h('span', { class: 'fondo-ilu', 'aria-hidden': 'true' }, ilustracion(modulo?.imagen)),
-    h('span', { class: 'autor' }, avatar(modulo), h('span', {}, h('b', {}, modulo?.nombre ?? 'Sin módulo'), h('span', {}, etiqueta(TIPOS, ev.tipo)))),
-    h('span', { class: 'cuando' }, cuandoLargo(ev.fecha, ahora), h('small', {}, `a las ${hora(ev.fecha)}`)),
-    h('span', { class: 'titulo' }, ev.titulo),
-    pct != null
-      ? h('span', { class: 'estudiado' }, h('span', { class: 'fila separa' }, h('span', {}, `${hechos} de ${temas.length} temas estudiados`), h('b', { class: 'num' }, `${pct} %`)), h('span', { class: 'barra' }, h('span', { style: `transform:scaleX(${pct / 100})` })))
-      : h('span', { class: 'estudiado' }, 'Toca para apuntar los temas que entran'),
-    nApuntes ? h('span', { class: 'adjuntos' }, icono('clip'), `${nApuntes} ${nApuntes === 1 ? 'apunte' : 'apuntes'}`) : null,
-  );
-}
-
 export async function render(cont) {
   const ahora = new Date();
-  const [modulos, lista, temas] = await Promise.all([repoModulos.listar(), repo.listar(), repo.temasPorEvaluacion()]);
+  const [modulos, lista, temas, apuntes] = await Promise.all([repoModulos.listar(), repo.listar(), repo.temasPorEvaluacion(), repoArchivos.contarPorEvaluacion()]);
   const porId = new Map(modulos.map((m) => [m.id, m]));
   if (moduloFiltrado && !porId.has(moduloFiltrado)) moduloFiltrado = null;
+  const elegido = porId.get(moduloFiltrado);
 
   const sinHacer = lista.filter((e) => e.estado === 'pendiente');
   const atrasadas = sinHacer.filter((e) => new Date(e.fecha) < ahora);
   const futuras = sinHacer.filter((e) => new Date(e.fecha) >= ahora);
   const proximas = futuras.filter((e) => diasHasta(e.fecha, ahora) <= DIAS_PROXIMO);
   const delFiltro = futuras.filter((e) => !moduloFiltrado || e.modulo_id === moduloFiltrado);
-  const [siguiente, ...resto] = delFiltro;
-  const restoSemana = resto.filter((e) => diasHasta(e.fecha, ahora) <= DIAS_PROXIMO);
-  const elegido = porId.get(moduloFiltrado);
+  const estaSemana = delFiltro.filter((e) => diasHasta(e.fecha, ahora) <= DIAS_PROXIMO);
+  const despues = delFiltro.filter((e) => diasHasta(e.fecha, ahora) > DIAS_PROXIMO);
 
   const repintar = () => window.dispatchEvent(new HashChangeEvent('hashchange'));
 
@@ -77,34 +68,48 @@ export async function render(cont) {
     cont,
     h(
       'header',
-      { class: 'cabecera' },
-      h('div', { class: 'saludo' }, h('h1', {}, saludo(ahora)), h('p', {}, fechaLarga(ahora))),
-      h('a', { class: 'boton redondo solo-movil', href: '#/perfil', 'aria-label': 'Tu perfil y tus módulos' }, icono('perfil')),
+      { class: 'barra-superior' },
+      h('h1', { class: 'marca-app' }, 'Exámenes'),
+      h(
+        'div',
+        { class: 'acciones-superior' },
+        h('a', { class: 'boton-icono', href: '#/estudiar', 'aria-label': 'Estudiar', title: 'Estudiar' }, icono('estudiar')),
+        h('a', { class: 'boton-icono', href: '#/evaluaciones', 'aria-label': 'Todas las evaluaciones', title: 'Todas las evaluaciones' }, icono('lista')),
+      ),
     ),
 
     historias(modulos, proximas, repintar),
 
     atrasadas.length
-      ? h('a', { class: 'aviso', href: '#/evaluaciones' }, icono('alerta'), h('span', {}, h('b', {}, `${atrasadas.length} ${atrasadas.length === 1 ? 'evaluación pasada' : 'evaluaciones pasadas'}`), ' sin nota ni estado'), h('span', { class: 'ir' }, 'Revisar'))
+      ? h(
+          'a',
+          { class: 'aviso', href: '#/evaluaciones' },
+          icono('alerta'),
+          h('span', {}, h('b', {}, `${atrasadas.length} ${atrasadas.length === 1 ? 'evaluación ya pasó' : 'evaluaciones ya pasaron'}`), ' y siguen como pendientes'),
+          h('span', { class: 'ir' }, 'Revisar'),
+        )
       : null,
 
-    siguiente
-      ? destacada(siguiente, porId.get(siguiente.modulo_id), temas.get(siguiente.id), (await repoArchivos.deEvaluacion(siguiente.id)).length, ahora)
+    estaSemana.length
+      ? h('section', { class: 'feed', 'aria-label': 'Esta semana' }, estaSemana.map((e) => post(e, porId.get(e.modulo_id), temas.get(e.id) ?? [], apuntes.get(e.id) ?? 0, ahora)))
       : h(
           'div',
           { class: 'vacio' },
-          icono('chispa'),
-          h('h3', {}, elegido ? `Nada pendiente de ${elegido.abreviatura}` : 'Todo al día'),
-          h('p', {}, 'Cuando el profe anuncie un examen o una entrega, apúntalo aquí y te avisaremos.'),
-          h('button', { type: 'button', class: 'boton primario', onclick: () => abrirFormulario(null, elegido ? { modulo_id: elegido.id } : {}) }, icono('mas'), elegido ? `Apuntar algo de ${elegido.abreviatura}` : 'Apuntar examen'),
+          h('span', { class: 'vacio-icono' }, icono('calendario')),
+          h('h2', {}, elegido ? `Nada de ${elegido.abreviatura} esta semana` : 'Nada esta semana'),
+          h('p', {}, despues.length ? 'Lo siguiente está más abajo.' : 'Cuando el profe anuncie un examen o una entrega, apúntalo aquí.'),
+          h('button', { type: 'button', class: 'enlace', onclick: () => abrirFormulario(null, elegido ? { modulo_id: elegido.id } : {}) }, elegido ? `Apuntar algo de ${elegido.abreviatura}` : 'Apuntar un examen'),
         ),
 
-    restoSemana.length ? h('div', { class: 'seccion' }, h('h2', {}, 'Esta semana'), feedPorDias(restoSemana, porId, temas, ahora)) : null,
-
-    siguiente && !restoSemana.length && resto.length
-      ? h('p', { class: 'suave pequeno' }, `Después: ${resto[0].titulo}, ${cuandoLargo(resto[0].fecha, ahora).toLowerCase()}.`)
+    despues.length
+      ? h(
+          'section',
+          { class: 'seccion' },
+          h('div', { class: 'seccion-cabecera' }, h('h2', {}, 'Más adelante'), h('a', { class: 'enlace', href: '#/evaluaciones' }, 'Ver todo')),
+          h('div', { class: 'grupo' }, despues.slice(0, MAS_ADELANTE).map((e) => publicacion(e, porId.get(e.modulo_id), temas.get(e.id), { conFecha: true, ahora }))),
+        )
       : null,
 
-    h('p', { class: 'fila' }, estadoDatos()),
+    h('p', { class: 'pie-estado' }, estadoDatos()),
   );
 }

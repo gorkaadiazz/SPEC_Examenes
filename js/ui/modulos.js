@@ -13,61 +13,67 @@ import { seccionApuntes } from './apuntes.js';
 import * as repoArchivos from '../repos/archivos.js';
 import { miniatura, esMiniaturaValida } from '../utils/imagen.js';
 
+/** Foto de Google del usuario (si la hay) o su inicial. */
+function fotoDePerfil(usuario, clase = '') {
+  const datos = usuario?.user_metadata ?? {};
+  const url = datos.avatar_url ?? datos.picture;
+  const nombre = datos.full_name ?? datos.name ?? '';
+  if (url && /^https:\/\//.test(url)) return h('span', { class: `avatar foto-perfil ${clase}` }, h('img', { src: url, alt: '', referrerpolicy: 'no-referrer' }));
+  // Iniciales del nombre y del primer apellido ("Ana Pérez" -> "AP")
+  const palabras = nombre.trim().split(/\s+/).filter((p) => !/^(de|del|la|las|los|y)$/i.test(p));
+  const iniciales = palabras.slice(0, 2).map((p) => p[0]).join('') || '2º';
+  return h('span', { class: `avatar foto-perfil ${clase}`, 'aria-hidden': 'true' }, iniciales);
+}
+export { fotoDePerfil };
+
 export async function render(cont) {
   const [modulos, evaluaciones] = await Promise.all([repo.listar(), repoEvaluaciones.listar()]);
   const pendientes = evaluaciones.filter((e) => e.estado === 'pendiente');
-  const nRA = new Map(await Promise.all(modulos.map(async (m) => [m.id, (await repo.listarRA(m.id)).length])));
   const nApuntes = await repoArchivos.contarPorModulo();
   const totalApuntes = [...nApuntes.values()].reduce((a, b) => a + b, 0);
+  const usuario = window.usuario;
+  const nombre = usuario?.user_metadata?.full_name ?? usuario?.user_metadata?.name ?? '2º SMR';
+  const cifra = (n, texto) => h('li', {}, h('b', { class: 'num' }, String(n)), texto);
 
   poner(
     cont,
+    h('header', { class: 'barra-superior' }, h('h1', { class: 'titulo-pantalla' }, 'Tu perfil'), h('a', { class: 'boton-icono', href: '#/ajustes', 'aria-label': 'Ajustes', title: 'Ajustes' }, icono('ajustes'))),
     h(
-      'header',
+      'section',
       { class: 'perfil' },
-      h('span', { class: 'avatar', 'aria-hidden': 'true' }, '2º'),
       h(
         'div',
-        { class: 'datos' },
-        h('h1', {}, '2º SMR'),
-        h('p', { class: 'suave' }, 'IES Ribera del Tajo'),
-        h('p', { class: 'cifras' }, h('span', {}, h('b', {}, String(modulos.length)), 'módulos'), h('span', {}, h('b', {}, String(pendientes.length)), 'pendientes'), h('span', {}, h('b', {}, String(totalApuntes)), totalApuntes === 1 ? 'apunte' : 'apuntes')),
+        { class: 'perfil-fila' },
+        fotoDePerfil(usuario, 'grande'),
+        h('ul', { class: 'cifras' }, cifra(modulos.length, 'módulos'), cifra(pendientes.length, 'pendientes'), cifra(totalApuntes, totalApuntes === 1 ? 'apunte' : 'apuntes')),
       ),
+      h('div', { class: 'perfil-bio' }, h('b', {}, nombre), h('span', {}, '2º SMR · IES Ribera del Tajo')),
+      h('div', { class: 'perfil-botones' }, h('button', { type: 'button', class: 'boton', onclick: () => abrirFormulario() }, 'Nuevo módulo'), h('a', { class: 'boton', href: '#/evaluaciones' }, 'Evaluaciones')),
     ),
     h(
       'section',
-      { class: 'seccion' },
-      h('h2', {}, 'Mis módulos'),
+      { class: 'seccion-rejilla', 'aria-label': 'Mis módulos' },
+      h('div', { class: 'pestanas-perfil', role: 'presentation' }, h('span', { class: 'activa' }, icono('todos'), 'Módulos')),
       h(
         'div',
         { class: 'rejilla' },
-        modulos.map((m) =>
-          h(
+        modulos.map((m) => {
+          const n = pendientes.filter((e) => e.modulo_id === m.id).length;
+          return h(
             'button',
-            { type: 'button', class: 'tesela', style: `--c:${m.color}`, onclick: () => abrirFormulario(m) },
-            avatar(m),
-            h(
-              'span',
-              {},
-              h('span', { class: 'nombre' }, m.nombre),
-              h('span', { class: 'meta' }, [m.abreviatura, `${nRA.get(m.id)} RA`, nApuntes.get(m.id) ? `${nApuntes.get(m.id)} ${nApuntes.get(m.id) === 1 ? 'apunte' : 'apuntes'}` : null].filter(Boolean).join(' · ')),
-            ),
-          ),
-        ),
-        h('button', { type: 'button', class: 'tesela nueva', onclick: () => abrirFormulario() }, icono('mas'), 'Nuevo módulo'),
+            { type: 'button', class: 'tesela', style: `--c:${m.color}`, onclick: () => abrirFormulario(m), 'aria-label': `${m.nombre}${n ? `, ${n} pendientes` : ''}` },
+            esMiniaturaValida(m.foto) ? h('img', { class: 'tesela-foto', src: m.foto, alt: '' }) : h('span', { class: 'tesela-ilu', 'aria-hidden': 'true' }, ilustracion(m.imagen)),
+            h('span', { class: 'tesela-nombre' }, m.abreviatura),
+            n ? h('span', { class: 'tesela-contador' }, String(n)) : null,
+          );
+        }),
       ),
     ),
-    h(
-      'nav',
-      { class: 'menu solo-movil', 'aria-label': 'Más opciones' },
-      h('a', { href: '#/evaluaciones' }, icono('evaluaciones'), 'Todas las evaluaciones', h('span', { class: 'fin' }, icono('flecha'))),
-      h('a', { href: '#/ajustes' }, icono('ajustes'), 'Ajustes', h('span', { class: 'fin' }, icono('flecha'))),
-    ),
-    window.usuario
+    usuario
       ? h(
           'div',
           { class: 'menu' },
-          h('button', { type: 'button', class: 'salir', onclick: confirmarCierreDeSesion }, icono('salir'), h('span', {}, 'Cerrar sesión', h('small', {}, window.usuario.email))),
+          h('button', { type: 'button', class: 'salir', onclick: confirmarCierreDeSesion }, icono('salir'), h('span', {}, 'Cerrar sesión', h('small', {}, usuario.email))),
         )
       : null,
   );
