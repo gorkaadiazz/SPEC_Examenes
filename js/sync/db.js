@@ -3,7 +3,7 @@
 // el mismo nombre, así en la fase 3 sincronizar es copiar filas tal cual.
 
 const NOMBRE_BD = 'examenes-2smr';
-const VERSION_BD = 1;
+const VERSION_BD = 2; // v2: almacén 'archivos_blob' para los apuntes
 
 // tabla -> índices (columnas por las que se busca)
 export const TABLAS = {
@@ -39,10 +39,22 @@ export function abrir() {
       }
       // Cola de cambios pendientes de subir: una entrada por fila ("tabla:id").
       if (!bd.objectStoreNames.contains('cola')) bd.createObjectStore('cola', { keyPath: 'clave' });
+      // Contenido de los apuntes (PDF, fotos). Solo vive en el dispositivo:
+      // en la fase 3 se subirá a Supabase Storage y aquí quedará como caché.
+      if (!bd.objectStoreNames.contains('archivos_blob')) bd.createObjectStore('archivos_blob', { keyPath: 'id' });
       // Datos sueltos de la app (p. ej. si ya se precargaron los módulos).
       if (!bd.objectStoreNames.contains('meta')) bd.createObjectStore('meta', { keyPath: 'clave' });
     };
-    req.onsuccess = () => ok(req.result);
+    req.onsuccess = () => {
+      const bd = req.result;
+      // Si otra pestaña abre una versión nueva de la base de datos, cerramos
+      // esta conexión para no bloquear la actualización.
+      bd.onversionchange = () => {
+        bd.close();
+        promesaBD = null;
+      };
+      ok(bd);
+    };
     req.onerror = () => ko(req.error);
   });
   return promesaBD;

@@ -36,31 +36,51 @@ function rutaActual() {
   return RUTAS[r] ? r : 'inicio';
 }
 
-function enlace(ruta, actual) {
+function enlace(ruta) {
   const def = RUTAS[ruta];
-  return h('a', { href: `#/${ruta}`, class: def.donde === 'pc' ? 'solo-pc' : null, 'aria-current': ruta === actual ? 'page' : null }, icono(ruta), def.titulo);
+  return h('a', { href: `#/${ruta}`, 'data-ruta': ruta, class: def.donde === 'pc' ? 'solo-pc' : null }, icono(ruta), def.titulo);
 }
 
+/**
+ * La barra se crea una sola vez y después solo se cambia cuál está activa:
+ * así la pastilla del icono activo puede animarse al cambiar de pestaña.
+ */
 function pintarNav() {
+  if (!nav.childElementCount) {
+    const crear = h('button', { type: 'button', class: 'crear', 'aria-label': 'Apuntar examen o entrega', onclick: () => evaluaciones.abrirFormulario() }, icono('mas'), h('span', { class: 'texto' }, 'Apuntar'));
+    // Móvil: Inicio · Calendario · (+) · Notas · Estudiar. El resto, en el perfil.
+    nav.append(
+      h('div', { class: 'marca' }, 'Exámenes'),
+      enlace('inicio'),
+      enlace('calendario'),
+      crear,
+      enlace('notas'),
+      enlace('estudiar'),
+      enlace('evaluaciones'),
+      enlace('perfil'),
+      enlace('ajustes'),
+    );
+  }
   const actual = rutaActual();
-  const crear = h('button', { type: 'button', class: 'crear', 'aria-label': 'Apuntar examen o entrega', onclick: () => evaluaciones.abrirFormulario() }, icono('mas'), h('span', { class: 'texto' }, 'Apuntar'));
-  // Móvil: Inicio · Calendario · (+) · Notas · Estudiar. El resto, en el perfil.
-  nav.replaceChildren(
-    h('div', { class: 'marca' }, 'Exámenes'),
-    enlace('inicio', actual),
-    enlace('calendario', actual),
-    crear,
-    enlace('notas', actual),
-    enlace('estudiar', actual),
-    enlace('evaluaciones', actual),
-    enlace('perfil', actual),
-    enlace('ajustes', actual),
-  );
+  for (const a of nav.querySelectorAll('a[data-ruta]')) {
+    if (a.dataset.ruta === actual) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  }
 }
 
+const menosMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)');
 let turno = 0; // evita que un pintado lento pise a otro más reciente
+let finEntrada = null;
 
-async function pintar() {
+/**
+ * Pinta la pantalla actual.
+ * - entrada: se llega a la pantalla (abrir la app o cambiar de pestaña):
+ *   se reproducen las animaciones de entrada.
+ * - transicion: misma pantalla con otro filtro: la tarjeta destacada se
+ *   transforma con View Transitions.
+ * - Sin opciones (se ha guardado algo): se repinta sin animar nada.
+ */
+async function pintar({ entrada = false, transicion = false } = {}) {
   const miTurno = ++turno;
   const ruta = rutaActual();
   pintarNav();
@@ -72,7 +92,23 @@ async function pintar() {
     console.error(e);
     contenido.replaceChildren(h('p', { class: 'error' }, `No se ha podido cargar la pantalla: ${e.message}`));
   }
-  if (miTurno === turno) vista.replaceChildren(contenido);
+  if (miTurno !== turno) return;
+
+  // Las filas con scroll horizontal (historias) conservan su posición
+  const scrolls = new Map([...vista.querySelectorAll('[data-conservar-scroll]')].map((el) => [el.dataset.conservarScroll, el.scrollLeft]));
+  const colocar = () => {
+    if (entrada) {
+      clearTimeout(finEntrada);
+      vista.setAttribute('data-entrada', '');
+      finEntrada = setTimeout(() => vista.removeAttribute('data-entrada'), 1400);
+    } else {
+      vista.removeAttribute('data-entrada');
+    }
+    vista.replaceChildren(contenido);
+    for (const el of vista.querySelectorAll('[data-conservar-scroll]')) el.scrollLeft = scrolls.get(el.dataset.conservarScroll) ?? 0;
+  };
+  if (transicion && document.startViewTransition && !menosMovimiento.matches) document.startViewTransition(colocar);
+  else colocar();
 }
 
 async function arrancar() {
@@ -81,16 +117,17 @@ async function arrancar() {
   } catch (e) {
     console.error(e); // sin módulos precargados la app sigue funcionando
   }
-  await pintar();
+  await pintar({ entrada: true });
 
   window.addEventListener('hashchange', (e) => {
+    // Los filtros vuelven a pintar la misma pantalla con la misma URL
     const cambioDePantalla = e.oldURL !== e.newURL;
-    pintar();
     if (cambioDePantalla) window.scrollTo(0, 0);
+    pintar(cambioDePantalla ? { entrada: true } : { transicion: true });
   });
-  escuchar('cambio', pintar); // algo se ha guardado o borrado
-  window.addEventListener('online', pintar);
-  window.addEventListener('offline', pintar);
+  escuchar('cambio', () => pintar()); // algo se ha guardado o borrado
+  window.addEventListener('online', () => pintar());
+  window.addEventListener('offline', () => pintar());
   // El inicio se refresca cada minuto (por si cambia el día).
   setInterval(() => {
     if (rutaActual() === 'inicio' && !document.querySelector('dialog[open]')) pintar();

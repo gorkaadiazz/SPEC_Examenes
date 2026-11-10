@@ -10,6 +10,8 @@ import * as repo from '../repos/evaluaciones.js';
 import { TIPOS, etiqueta } from '../repos/evaluaciones.js';
 import { avatar, feedPorDias, abrirFormulario } from './evaluaciones.js';
 import { icono } from './iconos.js';
+import { ilustracion } from './ilustraciones.js';
+import * as repoArchivos from '../repos/archivos.js';
 
 const DIAS_PROXIMO = 7;
 let moduloFiltrado = null; // id del módulo cuya "historia" está pulsada
@@ -23,34 +25,36 @@ function estadoDatos(n) {
 /** Fila de historias: "Todos" + un círculo por módulo. */
 function historias(modulos, proximas, repintar) {
   const cuantas = (id) => proximas.filter((e) => e.modulo_id === id).length;
-  const historia = (id, nombre, circulo, n, color) =>
+  const historia = (id, nombre, circulo, n, color, i) =>
     h(
       'button',
-      { type: 'button', class: 'historia', style: color ? `--c:${color}` : null, 'aria-pressed': String(moduloFiltrado === id), 'aria-label': id ? `${nombre}: ${n} esta semana` : 'Ver todos los módulos', onclick: () => { moduloFiltrado = moduloFiltrado === id ? null : id; repintar(); } },
+      { type: 'button', class: 'historia', style: `${color ? `--c:${color};` : ''}--i:${i}`, 'aria-pressed': String(moduloFiltrado === id), 'aria-label': id ? `${nombre}: ${n} esta semana` : 'Ver todos los módulos', onclick: () => { moduloFiltrado = moduloFiltrado === id ? null : id; repintar(); } },
       h('span', { class: 'marco' }, h('span', { class: `anillo ${n ? 'activo' : ''}` }, circulo), n ? h('span', { class: 'contador' }, String(n)) : null),
       h('span', { class: 'nombre' }, nombre),
     );
   return h(
     'nav',
-    { class: 'historias', 'aria-label': 'Filtrar por módulo' },
-    historia(null, 'Todos', h('span', { class: 'avatar todos' }, icono('todos')), 0),
-    modulos.map((m) => historia(m.id, m.abreviatura, avatar(m), cuantas(m.id), m.color)),
+    { class: 'historias', 'aria-label': 'Filtrar por módulo', 'data-conservar-scroll': 'historias' },
+    historia(null, 'Todos', h('span', { class: 'avatar todos' }, icono('todos')), 0, null, 0),
+    modulos.map((m, i) => historia(m.id, m.abreviatura, avatar(m), cuantas(m.id), m.color, i + 1)),
   );
 }
 
 /** La publicación grande: lo siguiente que tienes. */
-function destacada(ev, modulo, temas, ahora) {
+function destacada(ev, modulo, temas, nApuntes, ahora) {
   const pct = porcentajePreparado(temas);
   const hechos = temas?.filter((t) => t.estudiado).length ?? 0;
   return h(
     'button',
     { type: 'button', class: 'destacada', style: `--c:${modulo?.color ?? '#888'}`, onclick: () => abrirFormulario(ev) },
+    h('span', { class: 'fondo-ilu', 'aria-hidden': 'true' }, ilustracion(modulo?.imagen)),
     h('span', { class: 'autor' }, avatar(modulo), h('span', {}, h('b', {}, modulo?.nombre ?? 'Sin módulo'), h('span', {}, etiqueta(TIPOS, ev.tipo)))),
     h('span', { class: 'cuando' }, cuandoLargo(ev.fecha, ahora), h('small', {}, `a las ${hora(ev.fecha)}`)),
     h('span', { class: 'titulo' }, ev.titulo),
     pct != null
-      ? h('span', { class: 'estudiado' }, h('span', { class: 'fila separa' }, h('span', {}, `${hechos} de ${temas.length} temas estudiados`), h('b', { class: 'num' }, `${pct} %`)), h('span', { class: 'barra' }, h('span', { style: `width:${pct}%` })))
+      ? h('span', { class: 'estudiado' }, h('span', { class: 'fila separa' }, h('span', {}, `${hechos} de ${temas.length} temas estudiados`), h('b', { class: 'num' }, `${pct} %`)), h('span', { class: 'barra' }, h('span', { style: `transform:scaleX(${pct / 100})` })))
       : h('span', { class: 'estudiado' }, 'Toca para apuntar los temas que entran'),
+    nApuntes ? h('span', { class: 'adjuntos' }, icono('clip'), `${nApuntes} ${nApuntes === 1 ? 'apunte' : 'apuntes'}`) : null,
   );
 }
 
@@ -87,7 +91,7 @@ export async function render(cont) {
       : null,
 
     siguiente
-      ? destacada(siguiente, porId.get(siguiente.modulo_id), temas.get(siguiente.id), ahora)
+      ? destacada(siguiente, porId.get(siguiente.modulo_id), temas.get(siguiente.id), (await repoArchivos.deEvaluacion(siguiente.id)).length, ahora)
       : h(
           'div',
           { class: 'vacio' },

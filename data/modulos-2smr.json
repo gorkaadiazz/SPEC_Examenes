@@ -1,10 +1,10 @@
 [
-  {"abreviatura": "SOR", "nombre": "Sistemas Operativos en Red", "color": "#3b6ff5"},
-  {"abreviatura": "SI", "nombre": "Seguridad Informática", "color": "#ef4f5a"},
-  {"abreviatura": "SR", "nombre": "Servicios en Red", "color": "#12a37a"},
-  {"abreviatura": "AO", "nombre": "Aplicaciones Ofimáticas", "color": "#f29d12"},
-  {"abreviatura": "CNV", "nombre": "Computación en la Nube y Virtualización (optativa)", "color": "#0fb0c4"},
-  {"abreviatura": "IPE2", "nombre": "Itinerario Personal para la Empleabilidad II", "color": "#8b5cf6"},
-  {"abreviatura": "PI", "nombre": "Proyecto Intermodular", "color": "#e85a9b"},
-  {"abreviatura": "FE", "nombre": "Formación en Empresa", "color": "#64748b"}
+  {"abreviatura": "SOR", "nombre": "Sistemas Operativos en Red", "color": "#3b6ff5", "imagen": "sistemas"},
+  {"abreviatura": "SI", "nombre": "Seguridad Informática", "color": "#ef4f5a", "imagen": "candado"},
+  {"abreviatura": "SR", "nombre": "Servicios en Red", "color": "#12a37a", "imagen": "red"},
+  {"abreviatura": "AO", "nombre": "Aplicaciones Ofimáticas", "color": "#f29d12", "imagen": "documento"},
+  {"abreviatura": "CNV", "nombre": "Computación en la Nube y Virtualización (optativa)", "color": "#0fb0c4", "imagen": "nube"},
+  {"abreviatura": "IPE2", "nombre": "Itinerario Personal para la Empleabilidad II", "color": "#8b5cf6", "imagen": "maletin"},
+  {"abreviatura": "PI", "nombre": "Proyecto Intermodular", "color": "#e85a9b", "imagen": "cohete"},
+  {"abreviatura": "FE", "nombre": "Formación en Empresa", "color": "#64748b", "imagen": "empresa"}
 ]

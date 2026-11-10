@@ -7,11 +7,17 @@ import * as repoEvaluaciones from '../repos/evaluaciones.js';
 import { SISTEMAS_NOTAS, PALETA } from '../repos/modulos.js';
 import { avatar } from './evaluaciones.js';
 import { icono } from './iconos.js';
+import { ilustracion, ILUSTRACIONES } from './ilustraciones.js';
+import { seccionApuntes } from './apuntes.js';
+import * as repoArchivos from '../repos/archivos.js';
+import { miniatura, esMiniaturaValida } from '../utils/imagen.js';
 
 export async function render(cont) {
   const [modulos, evaluaciones] = await Promise.all([repo.listar(), repoEvaluaciones.listar()]);
   const pendientes = evaluaciones.filter((e) => e.estado === 'pendiente');
   const nRA = new Map(await Promise.all(modulos.map(async (m) => [m.id, (await repo.listarRA(m.id)).length])));
+  const nApuntes = await repoArchivos.contarPorModulo();
+  const totalApuntes = [...nApuntes.values()].reduce((a, b) => a + b, 0);
 
   poner(
     cont,
@@ -24,7 +30,7 @@ export async function render(cont) {
         { class: 'datos' },
         h('h1', {}, '2º SMR'),
         h('p', { class: 'suave' }, 'IES Ribera del Tajo'),
-        h('p', { class: 'cifras' }, h('span', {}, h('b', {}, String(modulos.length)), 'módulos'), h('span', {}, h('b', {}, String(pendientes.length)), 'pendientes')),
+        h('p', { class: 'cifras' }, h('span', {}, h('b', {}, String(modulos.length)), 'módulos'), h('span', {}, h('b', {}, String(pendientes.length)), 'pendientes'), h('span', {}, h('b', {}, String(totalApuntes)), totalApuntes === 1 ? 'apunte' : 'apuntes')),
       ),
     ),
     h(
@@ -43,7 +49,7 @@ export async function render(cont) {
               'span',
               {},
               h('span', { class: 'nombre' }, m.nombre),
-              h('span', { class: 'meta' }, [m.horas_semanales ? `${m.horas_semanales} h/semana` : 'Sin horas', `${nRA.get(m.id)} RA`].join(' · ')),
+              h('span', { class: 'meta' }, [m.abreviatura, `${nRA.get(m.id)} RA`, nApuntes.get(m.id) ? `${nApuntes.get(m.id)} ${nApuntes.get(m.id) === 1 ? 'apunte' : 'apuntes'}` : null].filter(Boolean).join(' · ')),
             ),
           ),
         ),
@@ -75,8 +81,42 @@ function filaRA(ra = {}) {
 }
 
 async function abrirFormulario(modulo = null) {
-  const ras = modulo ? await repo.listarRA(modulo.id) : [];
-  const v = { color: PALETA[0][0], sistema_notas: 'ra', ...(modulo ?? {}) };
+  const [ras, archivos] = modulo ? await Promise.all([repo.listarRA(modulo.id), repoArchivos.deModulo(modulo.id)]) : [[], []];
+  const v = { color: PALETA[0][0], sistema_notas: 'ra', imagen: 'libro', ...(modulo ?? {}) };
+  let foto = esMiniaturaValida(v.foto) ? v.foto : null;
+  const apuntes = seccionApuntes(archivos, 'Temario y apuntes del módulo (PDF o fotos, hasta 20 MB). También aparecen aquí los que subas en sus evaluaciones.');
+
+  // Selector de imagen: ilustraciones + "tu foto"
+  const opcionFoto = h('label', { class: 'chip imagen' }, h('input', { type: 'radio', name: 'imagen', value: '__foto', checked: !!foto, 'aria-label': 'Tu foto', onchange: () => !foto && selectorFoto.click() }), h('span', { class: 'avatar', style: `--c:${v.color}` }, foto ? h('img', { src: foto, alt: '' }) : icono('foto')));
+  const selectorFoto = h('input', { type: 'file', accept: 'image/*', class: 'oculto', tabindex: -1, 'aria-hidden': 'true', onchange: elegirFoto });
+  async function elegirFoto() {
+    const f = selectorFoto.files[0];
+    selectorFoto.value = '';
+    if (!f) return;
+    try {
+      foto = await miniatura(f);
+      opcionFoto.querySelector('.avatar').replaceChildren(h('img', { src: foto, alt: '' }));
+      opcionFoto.querySelector('input').checked = true;
+    } catch (err) {
+      mostrarError(err.message);
+    }
+  }
+  const imagenes = h(
+    'fieldset',
+    {},
+    h('legend', {}, 'Imagen'),
+    h(
+      'div',
+      { class: 'chips imagenes' },
+      ILUSTRACIONES.map(([clave, nombre]) => h('label', { class: 'chip imagen', title: nombre }, h('input', { type: 'radio', name: 'imagen', value: clave, checked: !foto && clave === v.imagen, 'aria-label': nombre }), h('span', { class: 'avatar', style: `--c:${v.color}` }, ilustracion(clave)))),
+      opcionFoto,
+    ),
+    h('div', {}, h('button', { type: 'button', class: 'boton', onclick: () => selectorFoto.click() }, icono('foto'), foto ? 'Cambiar tu foto' : 'Usar una foto tuya'), selectorFoto),
+  );
+  // Al cambiar de color, las vistas previas de imagen se recolorean
+  function recolorear(color) {
+    for (const a of imagenes.querySelectorAll('.avatar')) a.style.setProperty('--c', color);
+  }
   const enPaleta = PALETA.some(([c]) => c === v.color);
 
   const suma = h('span', { class: 'ayuda num' });
@@ -106,7 +146,7 @@ async function abrirFormulario(modulo = null) {
   }
   ras.forEach((r) => meterFila(filaRA(r)));
 
-  const colorLibre = h('input', { type: 'color', name: 'color_libre', value: v.color, 'aria-label': 'Otro color', oninput: () => { for (const r of form.querySelectorAll('input[name="color"]')) r.checked = false; } });
+  const colorLibre = h('input', { type: 'color', name: 'color_libre', value: v.color, 'aria-label': 'Otro color', oninput: () => { for (const r of form.querySelectorAll('input[name="color"]')) r.checked = false; recolorear(colorLibre.value); } });
 
   const form = h(
     'form',
@@ -125,11 +165,12 @@ async function abrirFormulario(modulo = null) {
       h(
         'div',
         { class: 'chips colores' },
-        PALETA.map(([c, nombre]) => h('label', { class: 'chip', style: `--c:${c}` }, h('input', { type: 'radio', name: 'color', value: c, checked: c === v.color, 'aria-label': nombre, onchange: () => (colorLibre.value = c) }), h('span', {}))),
+        PALETA.map(([c, nombre]) => h('label', { class: 'chip', style: `--c:${c}` }, h('input', { type: 'radio', name: 'color', value: c, checked: c === v.color, 'aria-label': nombre, onchange: () => { colorLibre.value = c; recolorear(c); } }), h('span', {}))),
         h('label', { class: 'chip', title: 'Otro color' }, colorLibre),
       ),
       enPaleta ? null : h('p', { class: 'ayuda' }, 'Este módulo usa un color propio (el círculo de la derecha).'),
     ),
+    imagenes,
     campo('Profesor/a', h('input', { name: 'profesor', type: 'text', value: v.profesor ?? '', maxlength: 80 })),
     opciones('Cómo se calcula la nota', 'sistema_notas', SISTEMAS_NOTAS, v.sistema_notas, 'segmentos'),
     h(
@@ -139,6 +180,7 @@ async function abrirFormulario(modulo = null) {
       listaRA,
       h('div', { class: 'fila separa' }, h('button', { type: 'button', class: 'boton', onclick: anadirRA }, icono('mas'), 'Añadir RA'), suma),
     ),
+    apuntes.el,
     error,
     h(
       'div',
@@ -165,8 +207,9 @@ async function abrirFormulario(modulo = null) {
     if (!nombre) return mostrarError('Ponle nombre al módulo.', form.nombre);
     if (!abreviatura) return mostrarError('Ponle una abreviatura (máx. 5 letras).', form.abreviatura);
     const horas = d.get('horas_semanales');
+    const imagen = d.get('imagen');
     try {
-      await repo.guardar(
+      const guardado = await repo.guardar(
         {
           ...(modulo ?? {}),
           nombre,
@@ -175,9 +218,12 @@ async function abrirFormulario(modulo = null) {
           profesor: d.get('profesor').trim(),
           horas_semanales: horas === '' ? null : Number(horas),
           sistema_notas: d.get('sistema_notas'),
+          imagen: imagen && imagen !== '__foto' ? imagen : (v.imagen ?? 'libro'),
+          foto: imagen === '__foto' ? foto : null,
         },
         leerRA(),
       );
+      await apuntes.aplicar({ modulo_id: guardado.id });
       hoja.close();
     } catch (err) {
       console.error(err);
