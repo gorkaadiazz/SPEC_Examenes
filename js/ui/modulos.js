@@ -7,6 +7,7 @@ import * as repoEvaluaciones from '../repos/evaluaciones.js';
 import { SISTEMAS_NOTAS, PALETA } from '../repos/modulos.js';
 import { avatar } from './evaluaciones.js';
 import { icono } from './iconos.js';
+import { confirmarCierreDeSesion } from '../auth.js';
 import { ilustracion, ILUSTRACIONES } from './ilustraciones.js';
 import { seccionApuntes } from './apuntes.js';
 import * as repoArchivos from '../repos/archivos.js';
@@ -62,6 +63,13 @@ export async function render(cont) {
       h('a', { href: '#/evaluaciones' }, icono('evaluaciones'), 'Todas las evaluaciones', h('span', { class: 'fin' }, icono('flecha'))),
       h('a', { href: '#/ajustes' }, icono('ajustes'), 'Ajustes', h('span', { class: 'fin' }, icono('flecha'))),
     ),
+    window.usuario
+      ? h(
+          'div',
+          { class: 'menu' },
+          h('button', { type: 'button', class: 'salir', onclick: confirmarCierreDeSesion }, icono('salir'), h('span', {}, 'Cerrar sesión', h('small', {}, window.usuario.email))),
+        )
+      : null,
   );
 }
 

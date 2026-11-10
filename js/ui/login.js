@@ -4,6 +4,7 @@
 import { h, poner } from '../utils/dom.js';
 import { entrarConGoogle, botonGoogle } from '../auth.js';
 import { ilustracion } from './ilustraciones.js';
+import { VERSION_APP } from '../config.js';
 
 // Logotipo de Google para el botón de inicio de sesión (colores oficiales)
 function logoGoogle() {
@@ -49,6 +50,7 @@ export function render(cont, mensajeError = null) {
       hueco,
       error,
       h('p', { class: 'ayuda' }, 'Privacidad: tus datos se guardan en tu propia cuenta y solo tú puedes verlos. Solo pueden entrar los emails autorizados.'),
+      h('p', { class: 'ayuda num' }, `Versión ${VERSION_APP}`),
     ),
   );
 
