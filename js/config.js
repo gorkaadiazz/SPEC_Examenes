@@ -10,6 +10,6 @@
 // Mientras estén a null la app funciona en "modo local": sin cuenta y con los
 // datos solo en este dispositivo.
 
-export const VERSION_APP = '0.5.1';
-export const SUPABASE_URL = 'https://pmcacougksqimitapiqr.supabase.co';
-export const SUPABASE_ANON_KEY = 'sb_publishable_DDZcsNkJeYLuvk6iRSBa5Q_6bBJX0Nw'; // clave pública
+export const VERSION_APP = '0.5.0';
+export const SUPABASE_URL = null; // p. ej. 'https://abcdefghijklmnop.supabase.co'
+export const SUPABASE_ANON_KEY = null; // p. ej. 'eyJhbGciOi...' o 'sb_publishable_...'
