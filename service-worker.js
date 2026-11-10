@@ -3,7 +3,7 @@
 // están en IndexedDB y, desde la fase 3, las llamadas a Supabase no pasan por aquí.
 
 // Sube este número cada vez que publiques cambios para renovar la caché.
-const VERSION = 'v0.6.1';
+const VERSION = 'v0.6.2';
 const CACHE = `examenes-2smr-${VERSION}`;
 
 // "Esqueleto" de la app: lo mínimo para arrancar sin red.
@@ -67,28 +67,30 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Peticiones: se responde al momento con la copia guardada y, a la vez, se
-// pide la versión nueva para la próxima vez ("stale-while-revalidate").
-// Por eso un cambio publicado se ve al abrir la app por segunda vez.
+// Peticiones: primero la red (así siempre se ve la versión más nueva al
+// publicar cambios) y, si no hay conexión o tarda más de 3 s, la copia
+// guardada. Cada respuesta buena de la red renueva la copia.
+const ESPERA_RED = 3000;
+
 self.addEventListener('fetch', (e) => {
   const { request } = e;
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
 
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
-      const guardada = await cache.match(request, { ignoreSearch: request.mode === 'navigate' });
-      const deRed = fetch(request)
-        .then((resp) => {
-          if (resp.ok) cache.put(request, resp.clone());
-          return resp;
-        })
-        .catch(() => null);
-      if (guardada) {
-        e.waitUntil(deRed);
-        return guardada;
+      const copia = () => cache.match(request, { ignoreSearch: request.mode === 'navigate' });
+      const deRed = fetch(request, { cache: 'no-cache' }).then((resp) => {
+        if (resp.ok) e.waitUntil(cache.put(request, resp.clone()));
+        return resp;
+      });
+      try {
+        // Si la red tarda, se sirve la copia (si la hay) sin dejar de esperar a la red
+        const lenta = new Promise((ok) => setTimeout(ok, ESPERA_RED)).then(async () => (await copia()) ?? deRed);
+        return await Promise.race([deRed, lenta]);
+      } catch {
+        // Sin conexión: la copia guardada o, para una página, la portada
+        return (await copia()) ?? (request.mode === 'navigate' ? cache.match('./index.html') : Response.error());
       }
-      // Sin copia: se espera a la red; si tampoco hay red, se sirve la portada.
-      return (await deRed) ?? (request.mode === 'navigate' ? cache.match('./index.html') : Response.error());
     }),
   );
 });

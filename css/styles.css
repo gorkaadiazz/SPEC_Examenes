@@ -457,6 +457,10 @@ body.sin-sesion .vista { min-height: 100dvh; padding-bottom: 32px; align-content
   .menu a:hover { background: var(--superficie-2); }
 }
 .menu .fin { margin-left: auto; color: var(--tinta-3); }
+.menu .salir { width: 100%; border: 0; background: none; font: inherit; font-weight: 550; text-align: left; cursor: pointer; color: var(--peligro); }
+.menu .salir > svg:first-child { background: color-mix(in srgb, var(--peligro) 14%, var(--superficie)); color: var(--peligro); }
+.menu .salir span { display: grid; }
+.menu .salir small { color: var(--tinta-3); font-weight: 400; font-size: 0.82rem; }
 
 /* ---------- Botones ---------- */
 .boton {

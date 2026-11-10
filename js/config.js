@@ -16,7 +16,7 @@
 // de Supabase (Google enseña entonces el dominio <proyecto>.supabase.co).
 // El "Client secret" NO va aquí: solo en Supabase.
 
-export const VERSION_APP = '0.6.1';
+export const VERSION_APP = '0.6.2';
 export const SUPABASE_URL = 'https://pmcacougksqimitapiqr.supabase.co';
 export const SUPABASE_ANON_KEY = 'sb_publishable_DDZcsNkJeYLuvk6iRSBa5Q_6bBJX0Nw'; // clave pública
 export const GOOGLE_CLIENT_ID = '884958998344-m4p6to10hss24vi5vmnrrjiddkrrmbdv.apps.googleusercontent.com'; // público

@@ -75,11 +75,14 @@ async function sha256(texto) {
  *   sin conexión o el script no carga): entonces se usa entrarConGoogle().
  */
 export async function botonGoogle(contenedor, { alEntrar, alError }) {
-  if (!GOOGLE_CLIENT_ID || !navigator.onLine || !crypto.subtle) return false;
+  if (!GOOGLE_CLIENT_ID || !navigator.onLine || !crypto.subtle) {
+    console.warn('Botón de Google desactivado:', !GOOGLE_CLIENT_ID ? 'falta GOOGLE_CLIENT_ID' : !navigator.onLine ? 'sin conexión' : 'el navegador no permite crypto.subtle (¿sin HTTPS?)');
+    return false;
+  }
   try {
     await cargarScriptGoogle();
   } catch (e) {
-    console.warn(e);
+    console.warn('Botón de Google desactivado:', e.message, '(¿bloqueador de anuncios o de rastreadores?)');
     return false;
   }
   // Número de un solo uso que liga el token de Google a este intento de login
@@ -128,6 +131,15 @@ export async function cerrarSesion() {
   await cliente.auth.signOut({ scope: 'local' }).catch(() => {});
   await borrarTodo();
   location.replace(location.pathname);
+}
+
+/** Pide confirmación (avisando si hay cambios sin subir) y cierra la sesión. */
+export async function confirmarCierreDeSesion() {
+  const { pendientes } = await import('./sync/cola.js');
+  const n = await pendientes();
+  const aviso = n ? `Hay ${n} ${n === 1 ? 'cambio que aún no se ha subido y se perderá' : 'cambios que aún no se han subido y se perderán'}. ` : '';
+  if (!confirm(`${aviso}¿Cerrar sesión?`)) return;
+  await cerrarSesion();
 }
 
 /** Avisa cuando la sesión se cierra (p. ej. desde otra pestaña o al caducar). */
