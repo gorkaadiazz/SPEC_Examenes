@@ -91,9 +91,8 @@ async function llamarGemini(instrucciones: string, partes: Parte[], esquema: unk
   // GEMINI_URL solo se usa en las pruebas locales
   const base = Deno.env.get('GEMINI_URL') || 'https://generativelanguage.googleapis.com';
 
-  let resp: Response;
-  try {
-    resp = await fetch(`${base}/v1beta/models/${encodeURIComponent(modelo)}:generateContent`, {
+  const peticion = () =>
+    fetch(`${base}/v1beta/models/${encodeURIComponent(modelo)}:generateContent`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': clave },
       body: JSON.stringify({
@@ -101,18 +100,39 @@ async function llamarGemini(instrucciones: string, partes: Parte[], esquema: unk
         contents: [{ role: 'user', parts: partes }],
         generationConfig: { responseMimeType: 'application/json', responseSchema: esquema },
       }),
-      signal: AbortSignal.timeout(90_000),
+      signal: AbortSignal.timeout(60_000),
     });
-  } catch (_e) {
-    throw new ErrorClaro(504, 'gemini_no_responde', 'La IA no responde ahora mismo. Prueba en un rato.');
+
+  // Los errores 5xx de Gemini (sobre todo el 503 "modelo saturado") suelen
+  // ser pasajeros: se reintenta un par de veces antes de rendirse.
+  let resp: Response | null = null;
+  for (let intento = 0; intento < 3; intento++) {
+    if (intento) await new Promise((ok) => setTimeout(ok, intento * 2000));
+    try {
+      resp = await peticion();
+    } catch (_e) {
+      resp = null;
+      continue;
+    }
+    if (resp.status < 500) break;
+    console.error('Gemini', resp.status, 'intento', intento + 1);
   }
+  if (!resp) throw new ErrorClaro(504, 'gemini_no_responde', 'La IA no responde ahora mismo. Prueba en un rato.');
 
   if (resp.status === 429) throw new ErrorClaro(429, 'limite_gemini', 'Has llegado al límite gratis de la IA. Prueba en un rato.');
   if (!resp.ok) {
-    console.error('Gemini', resp.status, (await resp.text()).slice(0, 500));
+    const cuerpo = (await resp.text()).slice(0, 800);
+    console.error('Gemini', resp.status, cuerpo);
+    // Código de Google (p. ej. UNAVAILABLE, INVALID_ARGUMENT): ayuda a saber qué pasa
+    let motivo = '';
+    try {
+      motivo = String(JSON.parse(cuerpo)?.error?.status ?? '').replace(/[^A-Z_]/g, '').slice(0, 40);
+    } catch (_e) { /* la respuesta no era JSON */ }
+    const detalle = ` (código ${resp.status}${motivo ? ` ${motivo}` : ''}, modelo ${modelo})`;
     if (resp.status === 404) throw new ErrorClaro(502, 'modelo', `El modelo «${modelo}» no existe o no está disponible. Revisa el secreto GEMINI_MODEL.`);
-    if (resp.status === 400 || resp.status === 403) throw new ErrorClaro(502, 'gemini_rechaza', 'La IA ha rechazado la petición (clave no válida, región no disponible o documento no admitido).');
-    throw new ErrorClaro(502, 'gemini_error', 'La IA ha fallado. Prueba otra vez en un rato.');
+    if (resp.status === 400 || resp.status === 403) throw new ErrorClaro(502, 'gemini_rechaza', `La IA ha rechazado la petición: clave no válida, región no disponible o documento no admitido${detalle}.`);
+    if (resp.status === 503) throw new ErrorClaro(502, 'gemini_saturada', `La IA está saturada ahora mismo. Prueba en unos minutos o cambia el secreto GEMINI_MODEL a otro modelo Flash${detalle}.`);
+    throw new ErrorClaro(502, 'gemini_error', `La IA ha fallado. Prueba otra vez en un rato${detalle}.`);
   }
 
   const datos = await resp.json();
