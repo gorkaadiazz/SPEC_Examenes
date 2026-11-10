@@ -31,6 +31,13 @@ export async function deEvaluacion(evaluacionId) {
   return filas.sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
+/** Nº de apuntes por evaluación: Map(evaluacion_id -> n). */
+export async function contarPorEvaluacion() {
+  const mapa = new Map();
+  for (const a of await db.todos('archivos')) if (a.evaluacion_id) mapa.set(a.evaluacion_id, (mapa.get(a.evaluacion_id) ?? 0) + 1);
+  return mapa;
+}
+
 /** Nº de apuntes por módulo: Map(modulo_id -> n). */
 export async function contarPorModulo() {
   const mapa = new Map();

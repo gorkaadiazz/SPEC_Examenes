@@ -21,7 +21,7 @@ Consultas rápidas varias veces al día con el móvil en una mano y con luz de d
 ## Capabilities and Constraints
 - HTML + CSS + JS sin frameworks; solo supabase-js y pdf.js servidos en local. Publicada en GitHub Pages. Instalable (PWA), mobile-first.
 - Interfaz en español; código comentado en español.
-- Especificación completa en `SPEC.md` (fases 1-9). Hechas: fases 1 y 2.
+- Especificación completa en `SPEC.md` (fases 1-9). Hechas: fases 1, 2 y 3.
 - Navegación: barra inferior en móvil (Inicio · Calendario · Notas · Estudiar · Más), lateral en PC.
 - Cada módulo tiene su propio color (apagado, no chillón); tema claro y oscuro, elegible a mano.
 
@@ -29,6 +29,7 @@ Consultas rápidas varias veces al día con el móvil en una mano y con luz de d
 - Nombre visible actual: «Exámenes 2º SMR».
 - El usuario **rechazó** el estilo «informático/terminal» (monoespaciada como disfraz, prompt `~$`, etiquetas `[SOR]`, cuentas atrás `T-3d`), y también lo encontró soso, apretado y con formularios toscos en el móvil.
 - Tema por defecto: **claro** (uso de día); el oscuro sigue disponible.
+- Dirección pedida por el usuario: **como una red social tipo Instagram, pero realista y profesional, que no parezca hecha por IA**. Interfaz neutra (blanco/negro, líneas finas, letra del sistema) y el color lo ponen los módulos (historias, publicaciones, cuadrícula del perfil). Sin degradados decorativos ni paletas violeta/rosa.
 
 ## Evidence on Hand
 Lista real de módulos en `data/modulos-2smr.json`. No hay logo, fotos ni datos reales de notas todavía.

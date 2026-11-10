@@ -18,6 +18,7 @@ import { icono } from './ui/iconos.js';
 import * as inicio from './ui/inicio.js';
 import * as evaluaciones from './ui/evaluaciones.js';
 import * as modulos from './ui/modulos.js';
+import { fotoDePerfil } from './ui/modulos.js';
 import * as ajustes from './ui/ajustes.js';
 import { pendiente } from './ui/pendiente.js';
 
@@ -27,9 +28,9 @@ const RUTAS = {
   inicio: { titulo: 'Inicio', donde: 'barra', render: inicio.render },
   calendario: { titulo: 'Calendario', donde: 'barra', render: pendiente('Calendario', 'calendario', 'Vista de mes y de semana con todo lo que tienes, y exportación a Google Calendar.') },
   notas: { titulo: 'Notas', donde: 'barra', render: pendiente('Notas', 'notas', 'Tus notas por RA, cuánto necesitas sacar para aprobar y el control de faltas.') },
-  estudiar: { titulo: 'Estudiar', donde: 'barra', render: pendiente('Estudiar', 'estudiar', 'Exámenes de práctica con IA a partir de tus apuntes, Pomodoro y flashcards.') },
+  estudiar: { titulo: 'Estudiar', donde: 'pc', render: pendiente('Estudiar', 'estudiar', 'Exámenes de práctica con IA a partir de tus apuntes, Pomodoro y flashcards.') },
   evaluaciones: { titulo: 'Evaluaciones', donde: 'pc', render: evaluaciones.render },
-  perfil: { titulo: 'Tú', donde: 'pc', render: modulos.render },
+  perfil: { titulo: 'Perfil', donde: 'barra', render: modulos.render },
   ajustes: { titulo: 'Ajustes', donde: 'pc', render: ajustes.render },
 };
 // Rutas antiguas que siguen funcionando
@@ -46,7 +47,10 @@ function rutaActual() {
 
 function enlace(ruta) {
   const def = RUTAS[ruta];
-  return h('a', { href: `#/${ruta}`, 'data-ruta': ruta, class: def.donde === 'pc' ? 'solo-pc' : null }, icono(ruta), def.titulo);
+  // En el móvil solo se ven los iconos (como en las redes sociales); el texto
+  // queda para el PC y para los lectores de pantalla.
+  const dibujo = ruta === 'perfil' && window.usuario ? fotoDePerfil(window.usuario, 'mini') : icono(ruta);
+  return h('a', { href: `#/${ruta}`, 'data-ruta': ruta, class: def.donde === 'pc' ? 'solo-pc' : null, title: def.titulo }, dibujo, h('span', { class: 'texto' }, def.titulo));
 }
 
 /**
@@ -55,17 +59,18 @@ function enlace(ruta) {
  */
 function pintarNav() {
   if (!nav.childElementCount) {
-    const crear = h('button', { type: 'button', class: 'crear', 'aria-label': 'Apuntar examen o entrega', onclick: () => evaluaciones.abrirFormulario() }, icono('mas'), h('span', { class: 'texto' }, 'Apuntar'));
-    // Móvil: Inicio · Calendario · (+) · Notas · Estudiar. El resto, en el perfil.
+    const crear = h('button', { type: 'button', class: 'crear', 'aria-label': 'Apuntar examen o entrega', onclick: () => evaluaciones.abrirFormulario(), title: 'Apuntar' }, icono('crear'), h('span', { class: 'texto' }, 'Apuntar'));
+    // Móvil: Inicio · Calendario · (+) · Notas · Perfil. Estudiar y la lista
+    // completa están en la barra superior del inicio; Ajustes, en el perfil.
     nav.append(
       h('div', { class: 'marca' }, 'Exámenes'),
       enlace('inicio'),
       enlace('calendario'),
       crear,
       enlace('notas'),
+      enlace('perfil'),
       enlace('estudiar'),
       enlace('evaluaciones'),
-      enlace('perfil'),
       enlace('ajustes'),
     );
   }
