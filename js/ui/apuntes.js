@@ -6,12 +6,31 @@ import { h } from '../utils/dom.js';
 import * as repo from '../repos/archivos.js';
 import { TIPOS_ACEPTADOS, problema, tamanoLegible } from '../repos/archivos.js';
 import { icono } from './iconos.js';
+import { configurado } from '../supabase.js';
+import { enlaceTemporal } from '../sync/sincronizar.js';
 
 /** Abre un apunte (fila guardada o File recién elegido) en una pestaña nueva. */
 export async function abrirApunte(apunte) {
   const blob = apunte instanceof Blob ? apunte : await repo.contenido(apunte.id);
   if (!blob) {
-    alert('Este apunte se subió desde otro dispositivo. Podrás verlo aquí cuando llegue la sincronización.');
+    // No está en este dispositivo: se abre desde Storage con un enlace temporal
+    if (!apunte.ruta || !configurado) {
+      alert('Este apunte aún no ha llegado a este dispositivo. Prueba dentro de un rato.');
+      return;
+    }
+    if (!navigator.onLine) {
+      alert('Este apunte está en la nube: necesitas conexión para abrirlo.');
+      return;
+    }
+    const ventana = window.open('', '_blank'); // se abre ya, para que el navegador no la bloquee
+    try {
+      const url = await enlaceTemporal(apunte.ruta);
+      if (ventana) ventana.location.href = url;
+      else location.href = url;
+    } catch (e) {
+      ventana?.close();
+      alert(`No se ha podido abrir el apunte: ${e.message}`);
+    }
     return;
   }
   const url = URL.createObjectURL(blob);

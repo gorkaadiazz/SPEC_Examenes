@@ -1,11 +1,19 @@
 // Arranque de la app y navegación entre pantallas.
 // La navegación usa el "hash" de la URL (#/inicio, #/perfil…), que funciona
 // en GitHub Pages sin configurar nada en el servidor.
-// En la fase 3 aquí se comprobará la sesión antes de pintar cualquier vista.
+//
+// Con Supabase configurado (js/config.js), sin sesión solo se ve la pantalla
+// de login: ninguna vista de datos se pinta sin usuario (sección 6.1).
 
 import { h } from './utils/dom.js';
 import { escuchar } from './utils/eventos.js';
-import { sembrarSiHaceFalta } from './repos/modulos.js';
+import { sembrar, sembrarSiHaceFalta, actualizarDatosAntiguos, ABREVIATURAS_PRECARGADAS } from './repos/modulos.js';
+import * as db from './sync/db.js';
+import { configurado } from './supabase.js';
+import { usuarioActual, recogerVueltaDeLogin, alCerrarSesion } from './auth.js';
+import * as sync from './sync/sincronizar.js';
+import { soloModulosPrecargados, ORDEN } from './sync/reglas.js';
+import * as login from './ui/login.js';
 import { icono } from './ui/iconos.js';
 import * as inicio from './ui/inicio.js';
 import * as evaluaciones from './ui/evaluaciones.js';
@@ -105,18 +113,100 @@ async function pintar({ entrada = false, transicion = false } = {}) {
       vista.removeAttribute('data-entrada');
     }
     vista.replaceChildren(contenido);
+    pintarEstadoSync(sync.estado);
     for (const el of vista.querySelectorAll('[data-conservar-scroll]')) el.scrollLeft = scrolls.get(el.dataset.conservarScroll) ?? 0;
   };
   if (transicion && document.startViewTransition && !menosMovimiento.matches) document.startViewTransition(colocar);
   else colocar();
 }
 
-async function arrancar() {
-  try {
-    await sembrarSiHaceFalta();
-  } catch (e) {
-    console.error(e); // sin módulos precargados la app sigue funcionando
+/** Pantalla de login a pantalla completa (sin barra de navegación). */
+function mostrarLogin(mensajeError) {
+  document.body.classList.add('sin-sesion');
+  document.title = 'Exámenes 2º SMR';
+  const contenido = document.createDocumentFragment();
+  login.render(contenido, mensajeError);
+  vista.setAttribute('data-entrada', '');
+  vista.replaceChildren(contenido);
+}
+
+/**
+ * Prepara la copia local para este usuario antes de pintar nada:
+ *  - si era de otra cuenta, se borra;
+ *  - si son datos del modo local (sin cuenta), se suben a la nube, salvo que
+ *    la cuenta ya tenga datos y aquí solo estén los módulos precargados
+ *    (se descartan para no duplicarlos).
+ */
+async function prepararDatosLocales(usuario) {
+  const propietario = (await db.obtener('meta', 'propietario'))?.valor;
+  if (propietario && propietario !== usuario.id) await db.borrarTodo();
+  if (!propietario) {
+    const conteos = Object.fromEntries(await Promise.all(ORDEN.map(async (t) => [t, await db.contar(t)])));
+    if (conteos.modulos > 0) {
+      let cuentaConDatos = false;
+      try {
+        cuentaConDatos = (await sync.contarEnServidor('modulos')) > 0;
+      } catch (e) {
+        console.warn('No se ha podido consultar la cuenta', e);
+      }
+      const abreviaturas = (await db.todos('modulos')).map((m) => m.abreviatura);
+      if (cuentaConDatos && soloModulosPrecargados(conteos, abreviaturas, ABREVIATURAS_PRECARGADAS)) await db.borrarTodo();
+      else await sync.reencolarTodo();
+    }
   }
+  await db.tx(['meta'], 'readwrite', (t) => t.objectStore('meta').put({ clave: 'propietario', valor: usuario.id }));
+}
+
+/**
+ * Primer inicio de sesión: si después de descargar la cuenta no tiene
+ * módulos, se crean los de 2º SMR (sección 3). Solo tras una descarga
+ * completa, para no duplicarlos en un dispositivo nuevo sin conexión.
+ */
+async function sembrarCuandoToque() {
+  if (!(await db.obtener('meta', 'primera_descarga'))) return;
+  await sembrar();
+  await actualizarDatosAntiguos();
+}
+
+/** Mantiene al día los indicadores de sincronización que haya en pantalla. */
+function pintarEstadoSync(estado) {
+  const pendientes = estado.pendientes;
+  const cambios = `${pendientes} ${pendientes === 1 ? 'cambio pendiente' : 'cambios pendientes'}`;
+  const textos = {
+    local: 'Guardado en este dispositivo',
+    sincronizando: 'Sincronizando…',
+    sincronizado: pendientes ? `Sincronizado · ${cambios}` : 'Sincronizado',
+    'sin-conexion': pendientes ? `Sin conexión (${cambios})` : 'Sin conexión',
+    error: `Error al sincronizar${pendientes ? ` (${cambios})` : ''}`,
+  };
+  for (const el of document.querySelectorAll('[data-estado-sync]')) {
+    el.textContent = textos[estado.fase];
+    el.dataset.fase = estado.fase;
+    el.title = estado.mensaje || '';
+  }
+}
+
+async function arrancar() {
+  let usuario = null;
+  if (configurado) {
+    const errorDeLogin = recogerVueltaDeLogin();
+    usuario = await usuarioActual();
+    if (!usuario) {
+      mostrarLogin(errorDeLogin);
+      registrarServiceWorker();
+      return;
+    }
+    await prepararDatosLocales(usuario);
+    sync.iniciar(usuario);
+    alCerrarSesion(() => location.reload());
+  } else {
+    try {
+      await sembrarSiHaceFalta();
+    } catch (e) {
+      console.error(e); // sin módulos precargados la app sigue funcionando
+    }
+  }
+  window.usuario = usuario; // para mostrar el email en Ajustes
   await pintar({ entrada: true });
 
   window.addEventListener('hashchange', (e) => {
@@ -126,6 +216,15 @@ async function arrancar() {
     pintar(cambioDePantalla ? { entrada: true } : { transicion: true });
   });
   escuchar('cambio', () => pintar()); // algo se ha guardado o borrado
+  escuchar('remoto', () => pintar()); // han llegado cambios de otro dispositivo
+  escuchar('sync', pintarEstadoSync);
+  if (usuario) {
+    // Primera sincronización y, si es una cuenta nueva, módulos de 2º SMR
+    escuchar('sync', (estado) => {
+      if (estado.fase === 'sincronizado') sembrarCuandoToque().catch((e) => console.error(e));
+    });
+    sync.sincronizar();
+  }
   window.addEventListener('online', () => pintar());
   window.addEventListener('offline', () => pintar());
   // El inicio se refresca cada minuto (por si cambia el día).
@@ -133,7 +232,11 @@ async function arrancar() {
     if (rutaActual() === 'inicio' && !document.querySelector('dialog[open]')) pintar();
   }, 60_000);
 
-  // Service worker: hace que la app sea instalable y funcione sin conexión.
+  registrarServiceWorker();
+}
+
+// Service worker: hace que la app sea instalable y funcione sin conexión.
+function registrarServiceWorker() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./service-worker.js').catch((e) => console.warn('Service worker no registrado', e));
   }

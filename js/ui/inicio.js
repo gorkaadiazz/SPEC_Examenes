@@ -4,7 +4,6 @@
 import { h, poner } from '../utils/dom.js';
 import { cuandoLargo, diasHasta, fechaLarga, hora, saludo } from '../utils/fechas.js';
 import { porcentajePreparado } from '../utils/progreso.js';
-import { pendientes } from '../sync/cola.js';
 import * as repoModulos from '../repos/modulos.js';
 import * as repo from '../repos/evaluaciones.js';
 import { TIPOS, etiqueta } from '../repos/evaluaciones.js';
@@ -16,10 +15,9 @@ import * as repoArchivos from '../repos/archivos.js';
 const DIAS_PROXIMO = 7;
 let moduloFiltrado = null; // id del módulo cuya "historia" está pulsada
 
-/** Punto de estado de los datos (hasta la fase 3 todo vive en el dispositivo). */
-function estadoDatos(n) {
-  const texto = !navigator.onLine ? `Sin conexión · ${n} sin subir` : 'Guardado en este dispositivo';
-  return h('span', { class: `estado-datos ${navigator.onLine ? 'ok' : ''}`, title: `${n} cambios esperando a la sincronización (fase 3)` }, texto);
+/** Indicador de sincronización (lo actualiza app.js con cada cambio de estado). */
+function estadoDatos() {
+  return h('span', { class: 'estado-datos', 'data-estado-sync': '', 'aria-live': 'polite' });
 }
 
 /** Fila de historias: "Todos" + un círculo por módulo. */
@@ -60,7 +58,7 @@ function destacada(ev, modulo, temas, nApuntes, ahora) {
 
 export async function render(cont) {
   const ahora = new Date();
-  const [modulos, lista, temas, nPendientes] = await Promise.all([repoModulos.listar(), repo.listar(), repo.temasPorEvaluacion(), pendientes()]);
+  const [modulos, lista, temas] = await Promise.all([repoModulos.listar(), repo.listar(), repo.temasPorEvaluacion()]);
   const porId = new Map(modulos.map((m) => [m.id, m]));
   if (moduloFiltrado && !porId.has(moduloFiltrado)) moduloFiltrado = null;
 
@@ -107,6 +105,6 @@ export async function render(cont) {
       ? h('p', { class: 'suave pequeno' }, `Después: ${resto[0].titulo}, ${cuandoLargo(resto[0].fecha, ahora).toLowerCase()}.`)
       : null,
 
-    h('p', { class: 'fila' }, estadoDatos(nPendientes)),
+    h('p', { class: 'fila' }, estadoDatos()),
   );
 }
