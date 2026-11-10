@@ -9,7 +9,14 @@
 //
 // Mientras estén a null la app funciona en "modo local": sin cuenta y con los
 // datos solo en este dispositivo.
+//
+// GOOGLE_CLIENT_ID es el "Client ID" del cliente OAuth de Google Cloud (acaba
+// en .apps.googleusercontent.com). También es público. Con él, el login usa el
+// botón oficial de Google en esta misma página; sin él, se usa la redirección
+// de Supabase (Google enseña entonces el dominio <proyecto>.supabase.co).
+// El "Client secret" NO va aquí: solo en Supabase.
 
-export const VERSION_APP = '0.5.0';
-export const SUPABASE_URL = null; // p. ej. 'https://abcdefghijklmnop.supabase.co'
-export const SUPABASE_ANON_KEY = null; // p. ej. 'eyJhbGciOi...' o 'sb_publishable_...'
+export const VERSION_APP = '0.6.0';
+export const SUPABASE_URL = 'https://pmcacougksqimitapiqr.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_DDZcsNkJeYLuvk6iRSBa5Q_6bBJX0Nw'; // clave pública
+export const GOOGLE_CLIENT_ID = null; // p. ej. '1234567890-abc123.apps.googleusercontent.com'

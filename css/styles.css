@@ -174,6 +174,8 @@ body.sin-sesion .vista { min-height: 100dvh; padding-bottom: 32px; align-content
 .login-historias { display: flex; margin-bottom: 6px; }
 .login-historias .avatar { width: 58px; height: 58px; margin-left: -12px; border: 3px solid var(--fondo); box-sizing: content-box; }
 .login-historias .avatar:first-child { margin-left: 0; }
+.hueco-google { display: grid; justify-items: center; width: 100%; min-height: 54px; }
+.boton-google-oficial { display: grid; justify-items: center; width: 100%; max-width: 340px; color-scheme: normal; }
 .boton.google { width: 100%; max-width: 340px; min-height: 54px; background: var(--superficie); color: var(--tinta); box-shadow: var(--sombra); font-size: 1rem; }
 .boton.google:disabled { opacity: 0.6; cursor: progress; }
 .logo-google { width: 22px; height: 22px; }

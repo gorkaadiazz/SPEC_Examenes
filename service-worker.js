@@ -3,7 +3,7 @@
 // están en IndexedDB y, desde la fase 3, las llamadas a Supabase no pasan por aquí.
 
 // Sube este número cada vez que publiques cambios para renovar la caché.
-const VERSION = 'v0.5.0';
+const VERSION = 'v0.6.0';
 const CACHE = `examenes-2smr-${VERSION}`;
 
 // "Esqueleto" de la app: lo mínimo para arrancar sin red.
