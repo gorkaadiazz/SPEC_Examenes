@@ -21,7 +21,7 @@ Consultas rápidas varias veces al día con el móvil en una mano y con luz de d
 ## Capabilities and Constraints
 - HTML + CSS + JS sin frameworks; solo supabase-js y pdf.js servidos en local. Publicada en GitHub Pages. Instalable (PWA), mobile-first.
 - Interfaz en español; código comentado en español.
-- Especificación completa en `SPEC.md` (fases 1-9). Hechas: fases 1, 2 y 3.
+- Especificación completa en `SPEC.md` (fases 1-9). Hechas: fases 1, 2, 3 y 6 (examen con IA).
 - Navegación: barra inferior en móvil (Inicio · Calendario · Notas · Estudiar · Más), lateral en PC.
 - Cada módulo tiene su propio color (apagado, no chillón); tema claro y oscuro, elegible a mano.
 

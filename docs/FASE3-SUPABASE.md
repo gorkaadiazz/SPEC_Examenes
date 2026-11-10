@@ -150,7 +150,7 @@ python3 -m http.server 8080
 **Comprobar la seguridad (RLS):** en **SQL Editor**, pega el contenido de `tests/rls.sql` y pulsa **Run**. Debe terminar con:
 
 ```
-NOTICE: RLS OK: 18 comprobaciones superadas
+NOTICE: RLS OK: 23 comprobaciones superadas
 ```
 
 No deja nada guardado: todo se deshace al final.

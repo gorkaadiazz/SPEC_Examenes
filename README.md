@@ -3,8 +3,9 @@
 PWA para organizar exámenes, prácticas, notas por RA y faltas de 2º de SMR.
 La especificación completa está en [SPEC.md](SPEC.md).
 
-**Estado:** fases 1, 2 y 3 hechas: base local con IndexedDB, PWA instalable,
-login con Google y sincronización con Supabase.
+**Estado:** fases 1, 2, 3 y 6 hechas: base local con IndexedDB, PWA instalable,
+login con Google, sincronización con Supabase y examen de práctica con IA.
+Para activar la IA sigue **[docs/FASE6-IA.md](docs/FASE6-IA.md)**.
 
 Para conectar Supabase y Google sigue **[docs/FASE3-SUPABASE.md](docs/FASE3-SUPABASE.md)**.
 Mientras `js/config.js` no tenga la URL y la clave pública de Supabase, la app
