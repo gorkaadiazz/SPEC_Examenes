@@ -71,6 +71,7 @@ export async function borrar(id) {
     ops.push(...(await opsBorrarEvaluacion(ev.id)));
   }
   for (const ra of await listarRA(id)) ops.push({ tabla: 'resultados_aprendizaje', op: 'delete', id: ra.id });
+  for (const a of await db.porIndice('archivos', 'modulo_id', id)) ops.push({ tabla: 'archivos', op: 'delete', id: a.id });
   ops.push({ tabla: 'modulos', op: 'delete', id });
   await escribir(ops);
 }
@@ -82,6 +83,21 @@ export async function borrar(id) {
 export async function sembrarSiHaceFalta() {
   await sembrar();
   await actualizarColoresAntiguos();
+  await ponerIlustraciones();
+}
+
+// Ilustración por defecto de cada módulo precargado (por su abreviatura).
+const ILUSTRACION_POR_DEFECTO = { SOR: 'sistemas', SI: 'candado', SR: 'red', AO: 'documento', CNV: 'nube', IPE2: 'maletin', PI: 'cohete', FE: 'empresa' };
+
+/** Una sola vez: los módulos guardados antes de que existieran las imágenes reciben una. */
+async function ponerIlustraciones() {
+  if (await db.obtener('meta', 'ilustraciones_v1')) return;
+  const ops = [];
+  for (const m of await db.todos('modulos')) {
+    if (!m.imagen && !m.foto) ops.push({ tabla: 'modulos', op: 'upsert', fila: preparar({ ...m, imagen: ILUSTRACION_POR_DEFECTO[m.abreviatura] ?? 'libro' }) });
+  }
+  await escribir(ops);
+  await db.tx(['meta'], 'readwrite', (t) => t.objectStore('meta').put({ clave: 'ilustraciones_v1', valor: true }));
 }
 
 async function sembrar() {

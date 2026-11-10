@@ -7,10 +7,15 @@ import * as repoModulos from '../repos/modulos.js';
 import * as repo from '../repos/evaluaciones.js';
 import { TIPOS, PERIODOS, ESTADOS, etiqueta } from '../repos/evaluaciones.js';
 import { icono } from './iconos.js';
+import { ilustracion } from './ilustraciones.js';
+import { seccionApuntes } from './apuntes.js';
+import * as repoArchivos from '../repos/archivos.js';
+import { esMiniaturaValida } from '../utils/imagen.js';
 
-/** Avatar redondo de un módulo con su abreviatura. */
+/** Avatar redondo de un módulo: su foto o su ilustración sobre su color. */
 export function avatar(modulo, extra = '') {
-  return h('span', { class: `avatar ${extra}`, style: modulo ? `--c:${modulo.color}` : null, 'aria-hidden': 'true' }, modulo?.abreviatura ?? '?');
+  const contenido = modulo && esMiniaturaValida(modulo.foto) ? h('img', { src: modulo.foto, alt: '' }) : ilustracion(modulo?.imagen);
+  return h('span', { class: `avatar ${extra}`, style: modulo ? `--c:${modulo.color}` : null, 'aria-hidden': 'true' }, contenido);
 }
 
 /** Pastilla con cuánto falta (o el estado si ya no está pendiente). */
@@ -24,7 +29,7 @@ export function pastilla(ev, ahora = new Date()) {
 /** Una evaluación como fila del feed. Al pulsarla se abre para editar. */
 export function publicacion(ev, modulo, temas, { conFecha = false, ahora = new Date() } = {}) {
   const pct = porcentajePreparado(temas);
-  const meta = [etiqueta(TIPOS, ev.tipo), conFecha ? `${fechaCorta(ev.fecha)}, ${hora(ev.fecha)}` : hora(ev.fecha)].join(' · ');
+  const meta = [modulo?.abreviatura, etiqueta(TIPOS, ev.tipo), conFecha ? `${fechaCorta(ev.fecha)}, ${hora(ev.fecha)}` : hora(ev.fecha)].filter(Boolean).join(' · ');
   return h(
     'button',
     { type: 'button', class: 'publicacion', style: modulo ? `--c:${modulo.color}` : null, onclick: () => abrirFormulario(ev) },
@@ -34,7 +39,7 @@ export function publicacion(ev, modulo, temas, { conFecha = false, ahora = new D
       { class: 'cuerpo' },
       h('span', { class: 'titulo' }, ev.titulo),
       h('span', { class: 'meta' }, meta),
-      pct != null && ev.estado === 'pendiente' ? h('span', { class: 'barra', role: 'img', 'aria-label': `${pct} % estudiado` }, h('span', { style: `width:${pct}%` })) : null,
+      pct != null && ev.estado === 'pendiente' ? h('span', { class: 'barra', role: 'img', 'aria-label': `${pct} % estudiado` }, h('span', { style: `transform:scaleX(${pct / 100})` })) : null,
     ),
     pastilla(ev, ahora),
   );
@@ -113,7 +118,8 @@ export async function abrirFormulario(ev = null, valoresIniciales = {}) {
     alert('Primero crea al menos un módulo (pestaña Tú).');
     return;
   }
-  const temas = ev ? await repo.listarTemas(ev.id) : [];
+  const [temas, archivos] = ev ? await Promise.all([repo.listarTemas(ev.id), repoArchivos.deEvaluacion(ev.id)]) : [[], []];
+  const apuntes = seccionApuntes(archivos, 'Sube el temario o tus apuntes (PDF o fotos, hasta 20 MB). Más adelante servirán para el examen de práctica con IA.');
   // Por defecto: mañana a las 08:30
   const porDefecto = new Date(Date.now() + 86_400_000);
   porDefecto.setHours(8, 30, 0, 0);
@@ -132,6 +138,7 @@ export async function abrirFormulario(ev = null, valoresIniciales = {}) {
     opciones('Tipo', 'tipo', TIPOS, v.tipo),
     h('div', { class: 'dos' }, campo('Día', h('input', { name: 'fecha', type: 'date', value: fecha })), campo('Hora', h('input', { name: 'hora', type: 'time', value: horaInicial }))),
     h('fieldset', {}, h('legend', {}, 'Temas que entran'), listaTemas, h('div', { class: 'anadir' }, nuevoTema, h('button', { type: 'button', class: 'boton', onclick: anadirTema }, 'Añadir')), h('p', { class: 'ayuda' }, 'Marca cada tema cuando lo tengas estudiado.')),
+    apuntes.el,
     opciones('Evaluación', 'evaluacion', PERIODOS, v.evaluacion, 'segmentos'),
     opciones('Estado', 'estado', ESTADOS, v.estado, 'segmentos'),
     h(
@@ -180,7 +187,7 @@ export async function abrirFormulario(ev = null, valoresIniciales = {}) {
       }))
       .filter((t) => t.texto);
     try {
-      await repo.guardar(
+      const guardada = await repo.guardar(
         {
           ...(ev ?? {}),
           titulo,
@@ -195,6 +202,7 @@ export async function abrirFormulario(ev = null, valoresIniciales = {}) {
         },
         nuevosTemas,
       );
+      await apuntes.aplicar({ modulo_id: guardada.modulo_id, evaluacion_id: guardada.id });
       hoja.close();
     } catch (err) {
       console.error(err);

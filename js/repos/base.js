@@ -35,10 +35,14 @@ export function preparar(datos) {
 export async function escribir(ops) {
   if (!ops.length) return;
   const almacenes = [...new Set(ops.map((o) => o.tabla)), 'cola'];
+  // Borrar un apunte borra también su contenido (que no pasa por la cola).
+  const conArchivos = ops.some((o) => o.tabla === 'archivos' && o.op === 'delete');
+  if (conArchivos) almacenes.push('archivos_blob');
   await db.tx(almacenes, 'readwrite', (t) => {
     for (const o of ops) {
       if (o.op === 'upsert') t.objectStore(o.tabla).put(o.fila);
       else t.objectStore(o.tabla).delete(o.id);
+      if (o.op === 'delete' && o.tabla === 'archivos') t.objectStore('archivos_blob').delete(o.id);
       encolar(t, o.tabla, o.op, o.op === 'upsert' ? o.fila.id : o.id);
     }
   });
