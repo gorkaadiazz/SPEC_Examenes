@@ -2,8 +2,14 @@
 
 import { cliente } from './supabase.js';
 import { borrarTodo } from './sync/db.js';
+import { GOOGLE_CLIENT_ID } from './config.js';
 
-/** Usuario con sesión iniciada, o null. */
+const SCRIPT_GOOGLE = 'https://accounts.google.com/gsi/client';
+
+/**
+ * Usuario con sesión iniciada, o null. La sesión se guarda en el navegador
+ * (localStorage) y se renueva sola, así que sobrevive a recargar y a cerrar la app.
+ */
 export async function usuarioActual() {
   const { data, error } = await cliente.auth.getSession();
   if (error) console.warn('Sesión no válida', error);
@@ -11,9 +17,10 @@ export async function usuarioActual() {
 }
 
 /**
- * Al volver de Google, Supabase deja en la URL ?code=… (o ?error=… si algo
- * ha fallado). La sesión ya la ha recogido supabase-js; aquí se lee el
- * posible error y se limpia la URL. Devuelve el mensaje de error o null.
+ * Al volver de Google por el plan B, Supabase deja en la URL ?code=… (o
+ * ?error=… si algo ha fallado). Hay que llamar a esto DESPUÉS de
+ * usuarioActual(), cuando supabase-js ya ha recogido la sesión: aquí se lee
+ * el posible error y se limpia la URL. Devuelve el mensaje de error o null.
  */
 export function recogerVueltaDeLogin() {
   const params = new URLSearchParams(location.search);
@@ -22,12 +29,92 @@ export function recogerVueltaDeLogin() {
   const hayError = params.has('error') || enHash.has('error');
   if (params.has('code') || hayError) history.replaceState(null, '', location.pathname + (hayError ? '' : location.hash));
   if (!hayError) return null;
-  // El trigger de emails_permitidos hace que Supabase devuelva este error genérico
-  if (/database error saving new user|no tiene acceso/i.test(descripcion ?? '')) return 'Este email no tiene acceso a la app. Entra con la cuenta autorizada.';
-  return `No se ha podido iniciar sesión${descripcion ? `: ${descripcion}` : '.'}`;
+  return mensajeDeError({ message: descripcion ?? 'error desconocido' });
 }
 
-/** Va a la pantalla de Google y vuelve a esta misma dirección. */
+/** Traduce los errores de Supabase Auth a un mensaje claro. */
+export function mensajeDeError(error) {
+  const texto = `${error?.message ?? ''} ${error?.code ?? ''}`;
+  // El trigger de emails_permitidos hace que Supabase devuelva este error genérico
+  if (/database error saving new user|no tiene acceso/i.test(texto)) return 'Este email no tiene acceso a la app. Entra con la cuenta autorizada.';
+  return `No se ha podido iniciar sesión: ${error?.message ?? 'error desconocido'}`;
+}
+
+// ---------------------------------------------------------------------------
+// Botón oficial de Google (Google Identity Services)
+//
+// El login ocurre en esta misma página: Google entrega un "ID token" firmado y
+// Supabase lo comprueba con signInWithIdToken. Como no hay redirección a
+// <proyecto>.supabase.co, Google no enseña ese dominio.
+// El script de Google se carga solo en la pantalla de login (necesita
+// conexión, igual que iniciar sesión).
+// ---------------------------------------------------------------------------
+
+function cargarScriptGoogle() {
+  if (window.google?.accounts?.id) return Promise.resolve();
+  return new Promise((ok, ko) => {
+    const s = document.createElement('script');
+    s.src = SCRIPT_GOOGLE;
+    s.async = true;
+    s.onload = () => ok();
+    s.onerror = () => ko(new Error('No se ha podido cargar el botón de Google'));
+    setTimeout(() => ko(new Error('El botón de Google tarda demasiado')), 8000);
+    document.head.append(s);
+  });
+}
+
+/** SHA-256 en hexadecimal (Google recibe el nonce cifrado y Supabase el original). */
+async function sha256(texto) {
+  const datos = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto));
+  return [...new Uint8Array(datos)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Pinta el botón de Google dentro de `contenedor`.
+ * @returns {Promise<boolean>} false si no se puede usar (falta el Client ID,
+ *   sin conexión o el script no carga): entonces se usa entrarConGoogle().
+ */
+export async function botonGoogle(contenedor, { alEntrar, alError }) {
+  if (!GOOGLE_CLIENT_ID || !navigator.onLine || !crypto.subtle) return false;
+  try {
+    await cargarScriptGoogle();
+  } catch (e) {
+    console.warn(e);
+    return false;
+  }
+  // Número de un solo uso que liga el token de Google a este intento de login
+  const nonce = crypto.getRandomValues(new Uint8Array(16)).reduce((t, b) => t + b.toString(16).padStart(2, '0'), '');
+  window.google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    nonce: await sha256(nonce),
+    context: 'signin',
+    ux_mode: 'popup',
+    use_fedcm_for_prompt: true,
+    use_fedcm_for_button: true,
+    itp_support: true,
+    callback: async ({ credential }) => {
+      const { error } = await cliente.auth.signInWithIdToken({ provider: 'google', token: credential, nonce });
+      if (error) alError(mensajeDeError(error));
+      else alEntrar();
+    },
+  });
+  const oscuro = getComputedStyle(document.documentElement).colorScheme === 'dark';
+  window.google.accounts.id.renderButton(contenedor, {
+    type: 'standard',
+    theme: oscuro ? 'filled_black' : 'outline',
+    size: 'large',
+    shape: 'pill',
+    text: 'continue_with',
+    logo_alignment: 'center',
+    locale: 'es',
+    width: Math.min(340, contenedor.clientWidth || 340),
+  });
+  // En Android sale además la ventanita de "Continuar como…" (One Tap)
+  window.google.accounts.id.prompt();
+  return true;
+}
+
+/** Plan B: va a la pantalla de Google pasando por Supabase y vuelve aquí. */
 export async function entrarConGoogle() {
   const { error } = await cliente.auth.signInWithOAuth({
     provider: 'google',

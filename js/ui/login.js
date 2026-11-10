@@ -2,7 +2,7 @@
 // único botón "Continuar con Google" y un aviso breve de privacidad).
 
 import { h, poner } from '../utils/dom.js';
-import { entrarConGoogle } from '../auth.js';
+import { entrarConGoogle, botonGoogle } from '../auth.js';
 import { ilustracion } from './ilustraciones.js';
 
 // Logotipo de Google para el botón de inicio de sesión (colores oficiales)
@@ -31,6 +31,8 @@ function logoGoogle() {
 export function render(cont, mensajeError = null) {
   const error = h('p', { class: 'error', role: 'alert' }, mensajeError ?? '');
   const boton = h('button', { type: 'button', class: 'boton google', onclick: entrar }, logoGoogle(), 'Continuar con Google');
+  // Hueco para el botón oficial de Google; mientras carga se ve el nuestro
+  const hueco = h('div', { class: 'hueco-google' }, boton);
 
   // Los módulos del ciclo, como una fila de historias de adorno
   const colores = [['#3b6ff5', 'sistemas'], ['#ef4f5a', 'candado'], ['#12a37a', 'red'], ['#f29d12', 'documento'], ['#0fb0c4', 'nube']];
@@ -44,11 +46,27 @@ export function render(cont, mensajeError = null) {
       adorno,
       h('h1', {}, 'Exámenes', h('br'), h('span', {}, '2º SMR')),
       h('p', { class: 'suave' }, 'Tus exámenes, entregas, apuntes y notas, en el móvil y en el PC.'),
-      boton,
+      hueco,
       error,
       h('p', { class: 'ayuda' }, 'Privacidad: tus datos se guardan en tu propia cuenta y solo tú puedes verlos. Solo pueden entrar los emails autorizados.'),
     ),
   );
+
+  // Botón oficial de Google (login sin salir de la app). Si no se puede
+  // usar, se queda nuestro botón, que entra pasando por Supabase.
+  queueMicrotask(async () => {
+    const oficial = h('div', { class: 'boton-google-oficial' });
+    hueco.append(oficial);
+    const listo = await botonGoogle(oficial, {
+      alEntrar: () => location.reload(),
+      alError: (texto) => (error.textContent = texto),
+    }).catch((e) => {
+      console.warn(e);
+      return false;
+    });
+    if (listo) boton.remove();
+    else oficial.remove();
+  });
 
   async function entrar() {
     if (!navigator.onLine) {

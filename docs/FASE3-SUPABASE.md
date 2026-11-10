@@ -115,6 +115,24 @@ Pulsa **Save**.
 
 > ⚠️ **Nunca** copies la clave **service_role** ni la **secret key** en el código ni en un chat. Esas solo van como secretos de Supabase (lo veremos en la fase 6).
 
+## 7 bis. Botón oficial de Google (para que no salga «supabase.co»)
+
+Con el login normal, Google enseña «Iniciar sesión en `<proyecto>.supabase.co`». Con el botón oficial de Google el login ocurre en la propia app y ese dominio no aparece.
+
+1. En `js/config.js` pon el **Client ID** de Google (el del paso 4; acaba en `.apps.googleusercontent.com`). Es público. El *Client secret* **no** va aquí.
+
+   ```js
+   export const GOOGLE_CLIENT_ID = '1234567890-abc123.apps.googleusercontent.com';
+   ```
+
+2. En Google Cloud → tu cliente OAuth → **Authorized JavaScript origins**, comprueba que están estos tres (para probar en local, Google pide `http://localhost` con y sin puerto):
+   - `https://gorkaadiazz.github.io`
+   - `http://localhost`
+   - `http://localhost:8080`
+3. En Supabase → **Authentication → Sign In / Providers → Google**, el campo **Client IDs** debe contener ese mismo Client ID (ya lo pusiste en el paso 5). Deja **Skip nonce checks** desactivado.
+
+Si el botón de Google no carga (sin conexión, bloqueado…), la app enseña su propio botón «Continuar con Google», que entra por el método normal.
+
 ## 8. Probarlo
 
 **En el PC (local):**

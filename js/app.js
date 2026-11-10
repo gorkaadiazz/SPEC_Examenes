@@ -189,8 +189,11 @@ function pintarEstadoSync(estado) {
 async function arrancar() {
   let usuario = null;
   if (configurado) {
-    const errorDeLogin = recogerVueltaDeLogin();
+    // Primero se espera a que supabase-js recoja la sesión de la URL (?code=…)
+    // y DESPUÉS se limpia la URL. Al revés, la sesión no llegaba a guardarse
+    // y al recargar se volvía al login.
     usuario = await usuarioActual();
+    const errorDeLogin = recogerVueltaDeLogin();
     if (!usuario) {
       mostrarLogin(errorDeLogin);
       registrarServiceWorker();
