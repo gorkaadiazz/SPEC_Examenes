@@ -88,7 +88,7 @@ export async function marcarTema(tema, estudiado) {
 export async function opsBorrarEvaluacion(id) {
   const ops = [];
   for (const tabla of ['temas', 'evaluacion_ra', 'archivos']) {
-    for (const f of await db.porIndice(tabla, 'evaluacion_id', id)) ops.push({ tabla, op: 'delete', id: f.id });
+    for (const f of await db.porIndice(tabla, 'evaluacion_id', id)) ops.push({ tabla, op: 'delete', id: f.id, extra: f.ruta ? { ruta: f.ruta } : undefined });
   }
   ops.push({ tabla: 'evaluaciones', op: 'delete', id });
   return ops;

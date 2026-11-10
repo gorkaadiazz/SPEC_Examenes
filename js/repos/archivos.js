@@ -66,8 +66,15 @@ export async function contenido(id) {
   return (await db.obtener('archivos_blob', id))?.blob ?? null;
 }
 
-export function borrar(id) {
-  return escribir([{ tabla: 'archivos', op: 'delete', id }]);
+export async function borrar(id) {
+  const fila = await db.obtener('archivos', id);
+  // La ruta hace falta para borrar también el archivo de Storage
+  return escribir([{ tabla: 'archivos', op: 'delete', id, extra: fila?.ruta ? { ruta: fila.ruta } : undefined }]);
+}
+
+/** Guarda en este dispositivo un apunte descargado de Storage (sin pasar por la cola). */
+export function guardarContenidoDescargado(id, blob) {
+  return db.tx(['archivos_blob'], 'readwrite', (t) => t.objectStore('archivos_blob').put({ id, blob }));
 }
 
 /** "1,2 MB", "350 KB" */

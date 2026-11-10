@@ -1,6 +1,6 @@
 // Base común de los repositorios: toda lectura y escritura de datos pasa por aquí.
-// Las vistas nunca tocan IndexedDB directamente, así en la fase 3 basta con
-// añadir la sincronización con Supabase en este punto.
+// Las vistas nunca tocan IndexedDB directamente: cada cambio se guarda en la
+// copia local y se apunta en la cola, y sincronizar.js lo sube a Supabase.
 
 import * as db from '../sync/db.js';
 import { encolar } from '../sync/cola.js';
@@ -30,7 +30,7 @@ export function preparar(datos) {
 
 /**
  * Aplica varias operaciones en una sola transacción y las apunta en la cola.
- * @param {Array<{tabla:string, op:'upsert', fila:object} | {tabla:string, op:'delete', id:string}>} ops
+ * @param {Array<{tabla:string, op:'upsert', fila:object} | {tabla:string, op:'delete', id:string, extra?:object}>} ops
  */
 export async function escribir(ops) {
   if (!ops.length) return;
@@ -43,7 +43,7 @@ export async function escribir(ops) {
       if (o.op === 'upsert') t.objectStore(o.tabla).put(o.fila);
       else t.objectStore(o.tabla).delete(o.id);
       if (o.op === 'delete' && o.tabla === 'archivos') t.objectStore('archivos_blob').delete(o.id);
-      encolar(t, o.tabla, o.op, o.op === 'upsert' ? o.fila.id : o.id);
+      encolar(t, o.tabla, o.op, o.op === 'upsert' ? o.fila.id : o.id, o.extra);
     }
   });
   emitir('cambio');

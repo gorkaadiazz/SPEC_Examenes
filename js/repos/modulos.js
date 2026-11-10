@@ -71,20 +71,29 @@ export async function borrar(id) {
     ops.push(...(await opsBorrarEvaluacion(ev.id)));
   }
   for (const ra of await listarRA(id)) ops.push({ tabla: 'resultados_aprendizaje', op: 'delete', id: ra.id });
-  for (const a of await db.porIndice('archivos', 'modulo_id', id)) ops.push({ tabla: 'archivos', op: 'delete', id: a.id });
+  for (const a of await db.porIndice('archivos', 'modulo_id', id)) ops.push({ tabla: 'archivos', op: 'delete', id: a.id, extra: a.ruta ? { ruta: a.ruta } : undefined });
   ops.push({ tabla: 'modulos', op: 'delete', id });
   await escribir(ops);
 }
 
 /**
  * Precarga los módulos de 2º de SMR la primera vez que se abre la app.
- * (En la fase 3 pasará a hacerse en el primer inicio de sesión del usuario.)
+ * Con Supabase configurado, app.js solo llama a sembrar() después de la
+ * primera descarga y si la cuenta no tenía módulos (primer inicio de sesión).
  */
 export async function sembrarSiHaceFalta() {
   await sembrar();
+  await actualizarDatosAntiguos();
+}
+
+/** Arreglos de una sola vez sobre datos guardados con versiones anteriores. */
+export async function actualizarDatosAntiguos() {
   await actualizarColoresAntiguos();
   await ponerIlustraciones();
 }
+
+// Abreviaturas de los módulos que se precargan (data/modulos-2smr.json)
+export const ABREVIATURAS_PRECARGADAS = ['SOR', 'SI', 'SR', 'AO', 'CNV', 'IPE2', 'PI', 'FE'];
 
 // Ilustración por defecto de cada módulo precargado (por su abreviatura).
 const ILUSTRACION_POR_DEFECTO = { SOR: 'sistemas', SI: 'candado', SR: 'red', AO: 'documento', CNV: 'nube', IPE2: 'maletin', PI: 'cohete', FE: 'empresa' };
@@ -100,7 +109,7 @@ async function ponerIlustraciones() {
   await db.tx(['meta'], 'readwrite', (t) => t.objectStore('meta').put({ clave: 'ilustraciones_v1', valor: true }));
 }
 
-async function sembrar() {
+export async function sembrar() {
   if (await db.obtener('meta', 'modulos_sembrados')) return;
   if ((await db.contar('modulos')) === 0) {
     const resp = await fetch('./data/modulos-2smr.json');
