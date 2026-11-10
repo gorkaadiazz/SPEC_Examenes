@@ -1,12 +1,14 @@
 // Pantalla provisional para las secciones que llegan en fases posteriores.
 
-import { h } from '../utils/dom.js';
+import { h, poner } from '../utils/dom.js';
+import { icono } from './iconos.js';
 
-export function pendiente(titulo, fase, descripcion) {
+export function pendiente(titulo, nombreIcono, descripcion) {
   return (cont) => {
-    cont.append(
-      h('h1', {}, titulo),
-      h('div', { class: 'vacio' }, h('p', { class: 'mono' }, `// fase ${fase}`), h('p', {}, descripcion)),
+    poner(
+      cont,
+      h('header', { class: 'cabecera' }, h('h1', {}, titulo)),
+      h('div', { class: 'vacio' }, icono(nombreIcono), h('h3', {}, 'Muy pronto'), h('p', {}, descripcion)),
     );
   };
 }
