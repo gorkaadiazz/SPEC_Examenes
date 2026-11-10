@@ -17,7 +17,7 @@ begin;
 
 create temporary table resultados (n int not null default 0);
 insert into resultados values (0);
-grant all on resultados to authenticated, anon;
+grant all on resultados to authenticated, anon, service_role;
 
 -- Usuarios de prueba (sus emails tienen que estar permitidos)
 insert into public.emails_permitidos (email) values ('prueba-a@rls.test'), ('prueba-b@rls.test');
@@ -38,7 +38,10 @@ $$;
 -- Ayudas: actuar como un usuario (o sin sesión) y comprobar
 create or replace function pg_temp.como(usuario text) returns void language plpgsql as $$
 begin
-  if usuario = 'anon' then
+  if usuario = 'service' then
+    perform set_config('role', 'service_role', true);
+    perform set_config('request.jwt.claims', '{"role":"service_role"}', true);
+  elsif usuario = 'anon' then
     perform set_config('role', 'anon', true);
     perform set_config('request.jwt.claims', '{"role":"anon"}', true);
   else
@@ -117,6 +120,16 @@ exception when insufficient_privilege then
 end;
 $$;
 
+-- B no puede llamar a la función que suma el uso de la IA (solo el servidor)
+do $$
+begin
+  perform public.sumar_uso_ia('bbbbbbbb-0000-4000-8000-000000000002', 20);
+  perform pg_temp.comprobar(false, 'B puede ejecutar sumar_uso_ia');
+exception when insufficient_privilege then
+  perform pg_temp.comprobar(true, '');
+end;
+$$;
+
 -- B no puede leer la lista de emails permitidos
 do $$
 begin
@@ -157,6 +170,14 @@ delete from public.modulos where id = 'a0000000-0000-4000-8000-0000000000a1';
 select pg_temp.comprobar((select count(*) from public.borrados where tabla in ('modulos', 'evaluaciones', 'temas')) = 3, 'los borrados (en cascada) no quedan apuntados');
 select pg_temp.como('bbbbbbbb-0000-4000-8000-000000000002');
 select pg_temp.comprobar((select count(*) from public.borrados) = 0, 'B puede ver los borrados de A');
+
+-- El límite diario de la IA: suma hasta el tope y después devuelve NULL
+select pg_temp.como('service');
+select pg_temp.comprobar(public.sumar_uso_ia('aaaaaaaa-0000-4000-8000-000000000001', 2) = 1, 'sumar_uso_ia: primera llamada');
+select pg_temp.comprobar(public.sumar_uso_ia('aaaaaaaa-0000-4000-8000-000000000001', 2) = 2, 'sumar_uso_ia: segunda llamada');
+select pg_temp.comprobar(public.sumar_uso_ia('aaaaaaaa-0000-4000-8000-000000000001', 2) is null, 'sumar_uso_ia: no respeta el límite');
+select pg_temp.como('aaaaaaaa-0000-4000-8000-000000000001');
+select pg_temp.comprobar((select llamadas from public.uso_ia) = 2, 'A no puede leer su contador de uso_ia');
 
 -- ---------------------------------------------------------------------------
 -- Resultado

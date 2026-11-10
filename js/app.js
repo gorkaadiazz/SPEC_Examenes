@@ -20,6 +20,7 @@ import * as evaluaciones from './ui/evaluaciones.js';
 import * as modulos from './ui/modulos.js';
 import { fotoDePerfil } from './ui/modulos.js';
 import * as ajustes from './ui/ajustes.js';
+import * as estudiar from './ui/estudiar.js';
 import { pendiente } from './ui/pendiente.js';
 
 // Pantallas. `donde`: 'barra' = barra inferior del móvil y lateral del PC;
@@ -28,7 +29,7 @@ const RUTAS = {
   inicio: { titulo: 'Inicio', donde: 'barra', render: inicio.render },
   calendario: { titulo: 'Calendario', donde: 'barra', render: pendiente('Calendario', 'calendario', 'Vista de mes y de semana con todo lo que tienes, y exportación a Google Calendar.') },
   notas: { titulo: 'Notas', donde: 'barra', render: pendiente('Notas', 'notas', 'Tus notas por RA, cuánto necesitas sacar para aprobar y el control de faltas.') },
-  estudiar: { titulo: 'Estudiar', donde: 'pc', render: pendiente('Estudiar', 'estudiar', 'Exámenes de práctica con IA a partir de tus apuntes, Pomodoro y flashcards.') },
+  estudiar: { titulo: 'Estudiar', donde: 'pc', render: estudiar.render },
   evaluaciones: { titulo: 'Evaluaciones', donde: 'pc', render: evaluaciones.render },
   perfil: { titulo: 'Perfil', donde: 'barra', render: modulos.render },
   ajustes: { titulo: 'Ajustes', donde: 'pc', render: ajustes.render },
@@ -121,8 +122,13 @@ async function pintar({ entrada = false, transicion = false } = {}) {
     pintarEstadoSync(sync.estado);
     for (const el of vista.querySelectorAll('[data-conservar-scroll]')) el.scrollLeft = scrolls.get(el.dataset.conservarScroll) ?? 0;
   };
-  if (transicion && document.startViewTransition && !menosMovimiento.matches) document.startViewTransition(colocar);
-  else colocar();
+  if (transicion && document.startViewTransition && !menosMovimiento.matches) {
+    // Si llega otro repintado a mitad, el navegador se salta la animación
+    // (el contenido se coloca igual): no es un error.
+    const t = document.startViewTransition(colocar);
+    t.ready.catch(() => {});
+    t.finished.catch(() => {});
+  } else colocar();
 }
 
 /** Pantalla de login a pantalla completa (sin barra de navegación). */
@@ -192,6 +198,12 @@ function pintarEstadoSync(estado) {
 }
 
 async function arrancar() {
+  // GitHub Pages no deja enviar la cabecera que impide incrustar la app en
+  // otra web, así que se comprueba aquí: dentro de un marco no se pinta nada.
+  if (window.top !== window.self) {
+    document.body.replaceChildren(h('p', { style: 'padding:24px' }, h('a', { href: location.href, target: '_top' }, 'Abrir Exámenes 2º SMR')));
+    return;
+  }
   let usuario = null;
   if (configurado) {
     // Primero se espera a que supabase-js recoja la sesión de la URL (?code=…)

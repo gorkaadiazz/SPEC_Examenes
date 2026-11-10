@@ -548,6 +548,30 @@ legend { padding: 0; margin-bottom: 8px; }
 .apunte-meta { font-size: 0.78rem; color: var(--tinta-3); }
 .apunte .boton { background: none; color: var(--tinta-3); }
 
+/* ---------- Estudiar: examen de práctica ---------- */
+.formulario.plano { padding: 0; }
+.renglon.elegir { padding: 8px 12px; cursor: pointer; min-height: 52px; }
+.trabajando { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 600; }
+.trabajando::before { content: ""; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--linea); border-top-color: var(--tinta); animation: girar 0.8s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+.barra-superior .atras { margin-left: -10px; }
+.titulo-pantalla.crece { flex: 1; }
+.preguntas { display: grid; gap: 22px; margin: 0; padding: 0; list-style: none; }
+.preguntas li { display: grid; gap: 8px; }
+.enunciado { display: flex; align-items: baseline; gap: 6px; font-size: 0.95rem; font-weight: 600; color: var(--tinta); line-height: 1.4; }
+.enunciado .pastilla { margin-left: auto; }
+.respuesta { display: grid; gap: 2px; padding: 10px 12px; border-radius: 10px; background: var(--gris); font-size: 0.92rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.respuesta.modelo { background: color-mix(in srgb, var(--ok) 10%, var(--fondo)); }
+.comentario { font-size: 0.88rem; color: var(--tinta-2); }
+.nota-final { display: flex; align-items: baseline; gap: 10px; color: var(--tinta-2); }
+.nota-final b { font-size: 3rem; line-height: 1; font-weight: 800; letter-spacing: -0.03em; color: var(--tinta); }
+.nota-final b.aprobado { color: var(--ok); }
+.nota-final b.suspendido { color: var(--peligro); }
+.evolucion { display: flex; align-items: flex-end; gap: 8px; height: 120px; padding-top: 18px; border-bottom: 1px solid var(--linea); }
+.evolucion-barra { flex: 1; max-width: 44px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; font-size: 0.74rem; }
+.evolucion-barra span { width: 100%; border-radius: 4px 4px 0 0; background: var(--c, var(--tinta)); }
+.codigo { margin: 0; padding: 12px; border-radius: 10px; background: var(--gris); font: 0.8rem/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+
 /* ---------- Hoja inferior (formularios) ---------- */
 .hoja {
   width: 100%;
@@ -671,6 +695,7 @@ body.sin-sesion .vista { min-height: 100dvh; padding-bottom: 24px; align-content
   .vista[data-entrada] > *, .vista[data-entrada] .historia, .vista[data-entrada] .tesela { animation-delay: 0ms; }
   .boton:active, .chip:active > span, .historia:active .anillo, .boton-icono:active, .nav a:active svg.icono, .nav .crear:active svg.icono, .accion:active svg.icono { transform: none; }
   .estado-datos[data-fase="sincronizando"]::before { animation: none; }
+  .trabajando::before { animation-duration: 2.4s; }
 }
 
 /* ---------- PC: barra lateral, columna central y ventana centrada ---------- */

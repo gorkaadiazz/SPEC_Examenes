@@ -45,3 +45,25 @@ test('soloModulosPrecargados', () => {
   assert.equal(soloModulosPrecargados({ modulos: 3, evaluaciones: 1 }, ['SOR', 'SI', 'SR'], semilla), false);
   assert.equal(soloModulosPrecargados({ modulos: 1 }, ['REDES'], semilla), false);
 });
+
+// --- Examen con IA: utilidades puras ---
+import { leerExamenJSON, notaMedia, temasFlojos } from '../js/utils/examen.js';
+
+test('leerExamenJSON acepta el formato y limpia lo que sobra', () => {
+  const p = leerExamenJSON('```json\n{"preguntas":[{"pregunta":" ¿Qué es DNS? ","respuesta_modelo":"Traduce nombres","tema":"DNS","extra":1},{"pregunta":"","respuesta_modelo":"x"}]}\n```');
+  assert.deepEqual(p, [{ pregunta: '¿Qué es DNS?', respuesta_modelo: 'Traduce nombres', tema: 'DNS' }]);
+  assert.equal(leerExamenJSON('[{"pregunta":"a","respuesta_modelo":"b"}]')[0].tema, 'General');
+  assert.throws(() => leerExamenJSON('no es json'), /JSON válido/);
+  assert.throws(() => leerExamenJSON('{"otra":1}'), /preguntas/);
+  assert.throws(() => leerExamenJSON('{"preguntas":[{"pregunta":"a"}]}'), /ninguna pregunta/);
+});
+
+test('notaMedia y temasFlojos', () => {
+  assert.equal(notaMedia([10, 5, 0]), 5);
+  assert.equal(notaMedia([]), null);
+  const intentos = [
+    { preguntas: [{ tema: 'DHCP' }, { tema: 'DNS' }], respuestas: [{ nota: 9 }, { nota: 2 }] },
+    { preguntas: [{ tema: 'DNS' }, { tema: 'NAT' }], respuestas: [{ nota: 4 }, { nota: 4.5 }] },
+  ];
+  assert.deepEqual(temasFlojos(intentos), [{ tema: 'DNS', media: 3, n: 2 }, { tema: 'NAT', media: 4.5, n: 1 }]);
+});

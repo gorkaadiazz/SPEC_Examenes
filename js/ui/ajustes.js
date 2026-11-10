@@ -42,6 +42,13 @@ export function render(cont) {
         )
       : null,
 
+    h(
+      'section',
+      { class: 'seccion' },
+      h('h2', {}, 'Examen con IA'),
+      h('p', { class: 'suave' }, 'Los exámenes de práctica usan Gemini, de Google. En su versión gratuita, Google puede usar lo que le envíes para mejorar sus modelos: para apuntes de clase no importa, pero no subas nada personal.'),
+    ),
+
     h('p', { class: 'ayuda num' }, `Versión ${VERSION_APP}`),
   );
 

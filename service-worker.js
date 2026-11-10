@@ -3,7 +3,7 @@
 // están en IndexedDB y, desde la fase 3, las llamadas a Supabase no pasan por aquí.
 
 // Sube este número cada vez que publiques cambios para renovar la caché.
-const VERSION = 'v0.7.0';
+const VERSION = 'v0.8.0';
 const CACHE = `examenes-2smr-${VERSION}`;
 
 // "Esqueleto" de la app: lo mínimo para arrancar sin red.
@@ -19,6 +19,11 @@ const ARCHIVOS = [
   './js/sync/sincronizar.js',
   './js/sync/reglas.js',
   './js/ui/login.js',
+  './js/ui/estudiar.js',
+  './js/ia.js',
+  './js/repos/examenes.js',
+  './js/utils/examen.js',
+  './js/utils/pdf.js',
   './lib/supabase.js',
   './js/sync/db.js',
   './js/sync/cola.js',

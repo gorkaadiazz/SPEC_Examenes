@@ -28,13 +28,24 @@ export const PALETA = [
 const COLORES_ANTIGUOS = ['#6b8fb3', '#c08a72', '#8aa888', '#d1b06b', '#6fa8a6', '#9a8fb8', '#b58a9f', '#8f9aa6'];
 const COLORES_NUEVOS = ['#3b6ff5', '#ef4f5a', '#12a37a', '#f29d12', '#0fb0c4', '#8b5cf6', '#e85a9b', '#64748b'];
 
+/**
+ * El color se escribe dentro de atributos `style`, así que solo se acepta el
+ * formato #rrggbb (aunque el dato venga de la nube o de una copia importada).
+ */
+function conColorSeguro(modulo) {
+  return /^#[0-9a-fA-F]{6}$/.test(modulo.color ?? '') ? modulo : { ...modulo, color: '#64748b' };
+}
+
 /** Todos los módulos, en el orden en que se crearon. */
 export async function listar() {
-  const filas = await repo.todos();
+  const filas = (await repo.todos()).map(conColorSeguro);
   return filas.sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0) || a.created_at.localeCompare(b.created_at));
 }
 
-export const obtener = repo.obtener;
+export const obtener = async (id) => {
+  const m = await repo.obtener(id);
+  return m ? conColorSeguro(m) : m;
+};
 
 /** RA de un módulo ordenados por código (RA1, RA2…). */
 export async function listarRA(moduloId) {
