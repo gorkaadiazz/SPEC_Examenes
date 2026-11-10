@@ -23,6 +23,7 @@ export async function abrirApunte(apunte) {
       return;
     }
     const ventana = window.open('', '_blank'); // se abre ya, para que el navegador no la bloquee
+    if (ventana) ventana.opener = null; // la pestaña nueva no puede controlar la app
     try {
       const url = await enlaceTemporal(apunte.ruta);
       if (ventana) ventana.location.href = url;

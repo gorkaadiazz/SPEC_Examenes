@@ -29,7 +29,10 @@ export function recogerVueltaDeLogin() {
   const hayError = params.has('error') || enHash.has('error');
   if (params.has('code') || hayError) history.replaceState(null, '', location.pathname + (hayError ? '' : location.hash));
   if (!hayError) return null;
-  return mensajeDeError({ message: descripcion ?? 'error desconocido' });
+  // El texto de la URL lo puede escribir cualquiera en un enlace: solo se usa
+  // para reconocer el caso del email no autorizado, nunca se muestra tal cual.
+  if (/database error saving new user|no tiene acceso/i.test(descripcion ?? '')) return mensajeDeError({ message: descripcion });
+  return 'No se ha podido iniciar sesión. Inténtalo de nuevo.';
 }
 
 /** Traduce los errores de Supabase Auth a un mensaje claro. */

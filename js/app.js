@@ -192,6 +192,12 @@ function pintarEstadoSync(estado) {
 }
 
 async function arrancar() {
+  // GitHub Pages no deja enviar la cabecera que impide incrustar la app en
+  // otra web, así que se comprueba aquí: dentro de un marco no se pinta nada.
+  if (window.top !== window.self) {
+    document.body.replaceChildren(h('p', { style: 'padding:24px' }, h('a', { href: location.href, target: '_top' }, 'Abrir Exámenes 2º SMR')));
+    return;
+  }
   let usuario = null;
   if (configurado) {
     // Primero se espera a que supabase-js recoja la sesión de la URL (?code=…)

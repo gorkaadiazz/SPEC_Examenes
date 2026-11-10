@@ -13,8 +13,10 @@ export const TIPOS_ACEPTADOS = 'application/pdf,image/jpeg,image/png,image/webp'
 
 /** Comprueba un archivo antes de guardarlo. Devuelve el motivo si no vale, o null. */
 export function problema(archivo) {
-  const tipoValido = archivo.type === 'application/pdf' || archivo.type.startsWith('image/');
-  if (!tipoValido) return `«${archivo.name}» no es un PDF ni una foto.`;
+  // Lista cerrada (la misma que el bucket y la tabla). Nada de SVG ni HTML:
+  // al abrirlos desde la app podrían ejecutar código con tu sesión.
+  const tipoValido = TIPOS_ACEPTADOS.split(',').includes(archivo.type);
+  if (!tipoValido) return `«${archivo.name}» no es un PDF ni una foto (JPG, PNG o WebP).`;
   if (archivo.size > TAMANO_MAXIMO) return `«${archivo.name}» pesa más de 20 MB.`;
   return null;
 }
