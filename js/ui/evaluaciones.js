@@ -166,11 +166,11 @@ function filaTema(tema = {}) {
 export async function abrirFormulario(ev = null, valoresIniciales = {}) {
   const modulos = await repoModulos.listar();
   if (!modulos.length) {
-    alert('Primero crea al menos un módulo (pestaña Tú).');
+    alert('Primero crea al menos un módulo (pestaña Perfil).');
     return;
   }
-  const [temas, archivos] = ev ? await Promise.all([repo.listarTemas(ev.id), repoArchivos.deEvaluacion(ev.id)]) : [[], []];
-  const apuntes = seccionApuntes(archivos, 'Sube el temario o tus apuntes (PDF o fotos, hasta 20 MB). Más adelante servirán para el examen de práctica con IA.');
+  const [temas, archivos, enlaces] = ev ? await Promise.all([repo.listarTemas(ev.id), repoArchivos.deEvaluacion(ev.id), repo.listarRA(ev.id)]) : [[], [], []];
+  const apuntes = seccionApuntes(archivos, 'Sube el temario o tus apuntes (PDF o fotos, hasta 20 MB).');
   // Por defecto: mañana a las 08:30
   const porDefecto = new Date(Date.now() + 86_400_000);
   porDefecto.setHours(8, 30, 0, 0);
@@ -181,15 +181,44 @@ export async function abrirFormulario(ev = null, valoresIniciales = {}) {
   const nuevoTema = h('input', { type: 'text', placeholder: 'Añade un tema y pulsa Intro', 'aria-label': 'Nuevo tema', maxlength: 200, onkeydown: (e) => e.key === 'Enter' && (e.preventDefault(), anadirTema()) });
   const error = h('p', { class: 'error', role: 'alert' });
 
+  // RA que evalúa: depende del módulo elegido, así que se repinta al cambiarlo
+  const seccionRA = h('fieldset', {});
+  async function pintarRA(moduloId) {
+    const modulo = modulos.find((m) => m.id === moduloId);
+    const ras = modulo?.sistema_notas === 'porcentajes' ? [] : await repoModulos.listarRA(moduloId);
+    seccionRA.replaceChildren(
+      h('legend', {}, 'RA que evalúa'),
+      ras.length
+        ? h(
+            'div',
+            { class: 'lista-edit' },
+            ras.map((ra) => {
+              const enlace = enlaces.find((l) => l.ra_id === ra.id);
+              return h(
+                'label',
+                { class: 'renglon elegir', 'data-ra': ra.id },
+                h('input', { type: 'checkbox', class: 'casilla', checked: !!enlace }),
+                h('span', { class: 'apunte-texto' }, h('span', { class: 'apunte-nombre' }, ra.codigo), ra.descripcion ? h('span', { class: 'apunte-meta' }, ra.descripcion) : null),
+                h('input', { type: 'number', class: 'corto', min: 0, max: 100, step: 1, inputmode: 'decimal', value: enlace?.peso ?? 100, 'aria-label': `Peso dentro de ${ra.codigo}`, title: 'Peso dentro del RA' }),
+              );
+            }),
+          )
+        : null,
+      h('p', { class: 'ayuda' }, ras.length ? 'El número es lo que pesa esta evaluación dentro del RA, comparada con las demás (100 = lo normal).' : modulo?.sistema_notas === 'porcentajes' ? 'Este módulo se calcula por porcentajes: no hace falta elegir RA.' : 'Este módulo aún no tiene RA. Añádelos en Perfil → el módulo.'),
+    );
+  }
+  await pintarRA(v.modulo_id);
+
   const form = h(
     'form',
-    { class: 'formulario', onsubmit: guardar, novalidate: true },
+    { class: 'formulario', onsubmit: guardar, novalidate: true, onchange: (e) => e.target.name === 'modulo_id' && pintarRA(e.target.value) },
     h('input', { name: 'titulo', type: 'text', class: 'grande', value: v.titulo ?? '', maxlength: 120, placeholder: '¿Qué tienes?', 'aria-label': 'Título' }),
     opciones('Módulo', 'modulo_id', modulos.map((m) => ({ valor: m.id, texto: m.abreviatura, color: m.color })), v.modulo_id),
     opciones('Tipo', 'tipo', TIPOS, v.tipo),
     h('div', { class: 'dos' }, campo('Día', h('input', { name: 'fecha', type: 'date', value: fecha })), campo('Hora', h('input', { name: 'hora', type: 'time', value: horaInicial }))),
     h('fieldset', {}, h('legend', {}, 'Temas que entran'), listaTemas, h('div', { class: 'anadir' }, nuevoTema, h('button', { type: 'button', class: 'boton', onclick: anadirTema }, 'Añadir')), h('p', { class: 'ayuda' }, 'Marca cada tema cuando lo tengas estudiado.')),
     apuntes.el,
+    seccionRA,
     opciones('Evaluación', 'evaluacion', PERIODOS, v.evaluacion, 'segmentos'),
     opciones('Estado', 'estado', ESTADOS, v.estado, 'segmentos'),
     h(
@@ -237,6 +266,12 @@ export async function abrirFormulario(ev = null, valoresIniciales = {}) {
         estudiado: fila.querySelector('input[type="checkbox"]').checked,
       }))
       .filter((t) => t.texto);
+    const ras = [...seccionRA.querySelectorAll('[data-ra]')]
+      .filter((fila) => fila.querySelector('.casilla').checked)
+      .map((fila) => ({ ra_id: fila.dataset.ra, peso: Math.min(100, Math.max(0, Number(fila.querySelector('input[type="number"]').value) || 0)) }));
+    // Si pones nota y sigue como pendiente, el estado se deduce de la nota
+    let estadoFinal = d.get('estado');
+    if (nota !== '' && estadoFinal === 'pendiente') estadoFinal = Number(nota) >= 5 ? 'aprobado' : 'suspendido';
     try {
       const guardada = await repo.guardar(
         {
@@ -246,12 +281,13 @@ export async function abrirFormulario(ev = null, valoresIniciales = {}) {
           tipo: d.get('tipo'),
           fecha: deInputs(d.get('fecha'), d.get('hora')),
           evaluacion: d.get('evaluacion'),
-          estado: d.get('estado'),
+          estado: estadoFinal,
           nota: nota === '' ? null : Number(nota),
           enlace: enlace ? enlaceSeguro(enlace) : null,
           notas: d.get('notas').trim(),
         },
         nuevosTemas,
+        ras,
       );
       await apuntes.aplicar({ modulo_id: guardada.modulo_id, evaluacion_id: guardada.id });
       hoja.close();

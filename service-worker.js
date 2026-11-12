@@ -3,7 +3,7 @@
 // están en IndexedDB y, desde la fase 3, las llamadas a Supabase no pasan por aquí.
 
 // Sube este número cada vez que publiques cambios para renovar la caché.
-const VERSION = 'v0.8.0';
+const VERSION = 'v1.0.0';
 const CACHE = `examenes-2smr-${VERSION}`;
 
 // "Esqueleto" de la app: lo mínimo para arrancar sin red.
@@ -19,11 +19,23 @@ const ARCHIVOS = [
   './js/sync/sincronizar.js',
   './js/sync/reglas.js',
   './js/ui/login.js',
+  './js/notas.js',
+  './js/ui/notas.js',
+  './js/ui/calendario.js',
+  './js/ui/herramientas.js',
+  './js/ui/fe.js',
+  './js/repos/perfil.js',
+  './js/repos/varios.js',
+  './js/tools/subredes.js',
+  './js/tools/repaso.js',
+  './js/utils/ics.js',
+  './js/utils/avisos.js',
+  './js/utils/backup.js',
+  './data/puertos.json',
+  './data/comandos.json',
   './js/ui/estudiar.js',
-  './js/ia.js',
   './js/repos/examenes.js',
   './js/utils/examen.js',
-  './js/utils/pdf.js',
   './lib/supabase.js',
   './js/sync/db.js',
   './js/sync/cola.js',
@@ -38,7 +50,6 @@ const ARCHIVOS = [
   './js/ui/iconos.js',
   './js/ui/ilustraciones.js',
   './js/ui/apuntes.js',
-  './js/ui/pendiente.js',
   './js/utils/dom.js',
   './js/utils/eventos.js',
   './js/utils/fechas.js',

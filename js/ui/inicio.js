@@ -9,6 +9,7 @@ import * as repo from '../repos/evaluaciones.js';
 import * as repoArchivos from '../repos/archivos.js';
 import { avatar, post, publicacion, abrirFormulario } from './evaluaciones.js';
 import { icono } from './iconos.js';
+import { resumenes } from './notas.js';
 
 const DIAS_PROXIMO = 7;
 const MAS_ADELANTE = 5; // cuántas se enseñan en "Más adelante"
@@ -64,6 +65,13 @@ export async function render(cont) {
 
   const repintar = () => window.dispatchEvent(new HashChangeEvent('hashchange'));
 
+  // Alertas de riesgo: un RA por debajo de 5 o las faltas cerca del límite
+  const riesgos = [];
+  for (const d of await resumenes()) {
+    if (d.notas.suspensas.length) riesgos.push({ modulo: d.modulo.abreviatura, grave: true, texto: `${d.notas.suspensas.join(', ')} por debajo de 5` });
+    if (d.asistencia.nivel !== 'ok') riesgos.push({ modulo: d.modulo.abreviatura, grave: d.asistencia.nivel === 'peligro', texto: d.asistencia.quedan > 0 ? `te quedan ${d.asistencia.quedan} h de faltas` : 'has superado el límite de faltas' });
+  }
+
   poner(
     cont,
     h(
@@ -89,6 +97,8 @@ export async function render(cont) {
           h('span', { class: 'ir' }, 'Revisar'),
         )
       : null,
+
+    riesgos.map((r) => h('a', { class: `aviso ${r.grave ? 'grave' : ''}`, href: '#/notas' }, icono('alerta'), h('span', {}, h('b', {}, `${r.modulo}: `), r.texto), h('span', { class: 'ir' }, 'Ver'))),
 
     estaSemana.length
       ? h('section', { class: 'feed', 'aria-label': 'Esta semana' }, estaSemana.map((e) => post(e, porId.get(e.modulo_id), temas.get(e.id) ?? [], apuntes.get(e.id) ?? 0, ahora)))
