@@ -11,6 +11,7 @@ import { confirmarCierreDeSesion } from '../auth.js';
 import { ilustracion, ILUSTRACIONES } from './ilustraciones.js';
 import { seccionApuntes } from './apuntes.js';
 import * as repoArchivos from '../repos/archivos.js';
+import * as repoPerfil from '../repos/perfil.js';
 import { miniatura, esMiniaturaValida } from '../utils/imagen.js';
 
 /** Foto de Google del usuario (si la hay) o su inicial. */
@@ -48,7 +49,7 @@ export async function render(cont) {
         h('ul', { class: 'cifras' }, cifra(modulos.length, 'módulos'), cifra(pendientes.length, 'pendientes'), cifra(totalApuntes, totalApuntes === 1 ? 'apunte' : 'apuntes')),
       ),
       h('div', { class: 'perfil-bio' }, h('b', {}, nombre), h('span', {}, '2º SMR · IES Ribera del Tajo')),
-      h('div', { class: 'perfil-botones' }, h('button', { type: 'button', class: 'boton', onclick: () => abrirFormulario() }, 'Nuevo módulo'), h('a', { class: 'boton', href: '#/evaluaciones' }, 'Evaluaciones')),
+      h('div', { class: 'perfil-botones' }, h('button', { type: 'button', class: 'boton', onclick: () => abrirFormulario() }, 'Nuevo módulo'), h('a', { class: 'boton', href: '#/notas' }, 'Mis notas')),
     ),
     h(
       'section',
@@ -67,6 +68,13 @@ export async function render(cont) {
             n ? h('span', { class: 'tesela-contador' }, String(n)) : null,
           );
         }),
+      ),
+    ),
+    h(
+      'nav',
+      { class: 'menu', 'aria-label': 'Más' },
+      [['estudiar', 'Estudiar', 'Examen de práctica, flashcards y Pomodoro'], ['herramientas', 'Herramientas', 'Subredes, conversor, puertos y comandos'], ['fe', 'Formación en Empresa', 'Horas y diario de prácticas'], ['evaluaciones', 'Evaluaciones', 'Todas, también las ya hechas'], ['ajustes', 'Ajustes', 'Tema, faltas, avisos y copias']].map(([ruta, titulo, texto]) =>
+        h('a', { href: `#/${ruta}` }, icono(ruta), h('span', { class: 'cuerpo' }, h('b', {}, titulo), h('small', {}, texto)), h('span', { class: 'fin' }, icono('flecha'))),
       ),
     ),
     usuario
@@ -97,6 +105,8 @@ function filaRA(ra = {}) {
 async function abrirFormulario(modulo = null) {
   const [ras, archivos] = modulo ? await Promise.all([repo.listarRA(modulo.id), repoArchivos.deModulo(modulo.id)]) : [[], []];
   const v = { color: PALETA[0][0], sistema_notas: 'ra', imagen: 'libro', ...(modulo ?? {}) };
+  const perfil = await repoPerfil.obtener();
+  const pesoExamenes = (modulo && perfil.preferencias.peso_examenes[modulo.id]) ?? 60;
   let foto = esMiniaturaValida(v.foto) ? v.foto : null;
   const apuntes = seccionApuntes(archivos, 'Temario y apuntes del módulo (PDF o fotos, hasta 20 MB). También aparecen aquí los que subas en sus evaluaciones.');
 
@@ -186,6 +196,7 @@ async function abrirFormulario(modulo = null) {
     ),
     imagenes,
     campo('Profesor/a', h('input', { name: 'profesor', type: 'text', value: v.profesor ?? '', maxlength: 80 })),
+    campo('Peso de los exámenes (%), solo si la nota va por porcentajes', h('input', { name: 'peso_examenes', type: 'number', min: 0, max: 100, step: 5, inputmode: 'numeric', value: pesoExamenes })),
     opciones('Cómo se calcula la nota', 'sistema_notas', SISTEMAS_NOTAS, v.sistema_notas, 'segmentos'),
     h(
       'fieldset',
@@ -238,6 +249,8 @@ async function abrirFormulario(modulo = null) {
         leerRA(),
       );
       await apuntes.aplicar({ modulo_id: guardado.id });
+      const peso = Math.min(100, Math.max(0, Number(d.get('peso_examenes')) || 0));
+      if (peso !== pesoExamenes || d.get('sistema_notas') === 'porcentajes') await repoPerfil.guardar({}, { peso_examenes: { ...perfil.preferencias.peso_examenes, [guardado.id]: peso } });
       hoja.close();
     } catch (err) {
       console.error(err);

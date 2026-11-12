@@ -10,7 +10,7 @@ web
 Un único estudiante de 2º de SMR (Sistemas Microinformáticos y Redes) en el IES Ribera del Tajo, Talavera de la Reina. La usa sobre todo **de día, en clase o en el bus**, desde un móvil Android con la PWA instalada, y también en el PC. Su trabajo: saber qué examen o entrega viene, cuánto lleva estudiado, cómo van sus notas por RA y cuántas faltas puede permitirse.
 
 ## Product Purpose
-Organizar exámenes, prácticas, trabajos y entregas de 2º SMR, con notas por Resultados de Aprendizaje (RA), control de faltas (se pierde la evaluación continua con un 25 %), examen de práctica con IA, herramientas de redes y Formación en Empresa. Éxito: nunca le pilla por sorpresa un examen y sabe en todo momento qué nota necesita.
+Organizar exámenes, prácticas, trabajos y entregas de 2º SMR, con notas por Resultados de Aprendizaje (RA), control de faltas (se pierde la evaluación continua con un 25 %), examen de práctica (sin IA: preguntas importadas y autocorrección), herramientas de redes y Formación en Empresa. Éxito: nunca le pilla por sorpresa un examen y sabe en todo momento qué nota necesita.
 
 ## Positioning
 Hecha a medida del ciclo: módulos de 2º SMR precargados, evaluación por RA donde hay que aprobar todos, límite de faltas por horas del módulo. Una agenda genérica no sabe nada de eso.
@@ -21,7 +21,7 @@ Consultas rápidas varias veces al día con el móvil en una mano y con luz de d
 ## Capabilities and Constraints
 - HTML + CSS + JS sin frameworks; solo supabase-js y pdf.js servidos en local. Publicada en GitHub Pages. Instalable (PWA), mobile-first.
 - Interfaz en español; código comentado en español.
-- Especificación completa en `SPEC.md` (fases 1-9). Hechas: fases 1, 2, 3 y 6 (examen con IA).
+- Especificación completa en `SPEC.md` (fases 1-9). Todas hechas (v1.0). La IA de la fase 6 se retiró a petición del usuario porque no le funcionaba; queda el plan B sin IA.
 - Navegación: barra inferior en móvil (Inicio · Calendario · Notas · Estudiar · Más), lateral en PC.
 - Cada módulo tiene su propio color (apagado, no chillón); tema claro y oscuro, elegible a mano.
 

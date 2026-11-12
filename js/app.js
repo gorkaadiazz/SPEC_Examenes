@@ -21,15 +21,24 @@ import * as modulos from './ui/modulos.js';
 import { fotoDePerfil } from './ui/modulos.js';
 import * as ajustes from './ui/ajustes.js';
 import * as estudiar from './ui/estudiar.js';
-import { pendiente } from './ui/pendiente.js';
+import * as calendario from './ui/calendario.js';
+import * as notas from './ui/notas.js';
+import * as herramientas from './ui/herramientas.js';
+import * as fe from './ui/fe.js';
+import * as repoPerfil from './repos/perfil.js';
+import * as repoEvaluaciones from './repos/evaluaciones.js';
+import { avisarProximas } from './utils/avisos.js';
+import { cuandoLargo, hora } from './utils/fechas.js';
 
 // Pantallas. `donde`: 'barra' = barra inferior del móvil y lateral del PC;
 // 'pc' = solo en la lateral del PC (en el móvil se llega desde el perfil).
 const RUTAS = {
   inicio: { titulo: 'Inicio', donde: 'barra', render: inicio.render },
-  calendario: { titulo: 'Calendario', donde: 'barra', render: pendiente('Calendario', 'calendario', 'Vista de mes y de semana con todo lo que tienes, y exportación a Google Calendar.') },
-  notas: { titulo: 'Notas', donde: 'barra', render: pendiente('Notas', 'notas', 'Tus notas por RA, cuánto necesitas sacar para aprobar y el control de faltas.') },
+  calendario: { titulo: 'Calendario', donde: 'barra', render: calendario.render },
+  notas: { titulo: 'Notas', donde: 'barra', render: notas.render },
   estudiar: { titulo: 'Estudiar', donde: 'pc', render: estudiar.render },
+  herramientas: { titulo: 'Herramientas', donde: 'pc', render: herramientas.render },
+  fe: { titulo: 'Formación en Empresa', donde: 'pc', render: fe.render },
   evaluaciones: { titulo: 'Evaluaciones', donde: 'pc', render: evaluaciones.render },
   perfil: { titulo: 'Perfil', donde: 'barra', render: modulos.render },
   ajustes: { titulo: 'Ajustes', donde: 'pc', render: ajustes.render },
@@ -71,6 +80,8 @@ function pintarNav() {
       enlace('notas'),
       enlace('perfil'),
       enlace('estudiar'),
+      enlace('herramientas'),
+      enlace('fe'),
       enlace('evaluaciones'),
       enlace('ajustes'),
     );
@@ -253,6 +264,18 @@ async function arrancar() {
   }, 60_000);
 
   registrarServiceWorker();
+  recordatorios();
+}
+
+/** Al abrir la app: notificaciones de lo que viene (si están activadas). */
+async function recordatorios() {
+  try {
+    const perfil = await repoPerfil.obtener();
+    if (!perfil.preferencias.avisos) return;
+    avisarProximas(await repoEvaluaciones.listar(), perfil.preferencias.dias_aviso, (e) => `${cuandoLargo(e.fecha)} a las ${hora(e.fecha)}`);
+  } catch (e) {
+    console.warn('Recordatorios', e);
+  }
 }
 
 // Service worker: hace que la app sea instalable y funcione sin conexión.

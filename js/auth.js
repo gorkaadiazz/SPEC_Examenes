@@ -136,6 +136,39 @@ export async function cerrarSesion() {
   location.replace(location.pathname);
 }
 
+/** Deja el dispositivo limpio: datos locales, caché de la app y service worker. */
+export async function limpiarDispositivo() {
+  await borrarTodo();
+  try {
+    for (const k of Object.keys(localStorage)) if (k !== 'tema') localStorage.removeItem(k);
+    for (const nombre of await caches.keys()) await caches.delete(nombre);
+    for (const registro of (await navigator.serviceWorker?.getRegistrations()) ?? []) await registro.unregister();
+  } catch (e) {
+    console.warn('Limpieza incompleta', e);
+  }
+}
+
+/**
+ * Borra la cuenta (sección 6.6): la Edge Function `borrar-cuenta` elimina los
+ * archivos y el usuario; después se limpia este dispositivo y se vuelve al
+ * login. Si algo falla, lanza un Error y NO se da la cuenta por borrada.
+ */
+export async function borrarCuenta() {
+  if (!navigator.onLine) throw new Error('Necesitas conexión para borrar la cuenta.');
+  const { data, error } = await cliente.functions.invoke('borrar-cuenta', { body: { confirmar: 'BORRAR' } });
+  if (error || !data?.ok) {
+    let mensaje = null;
+    try {
+      mensaje = (await error?.context?.json?.())?.mensaje;
+    } catch { /* la respuesta no era JSON */ }
+    if (!mensaje && /not found|404/i.test(error?.message ?? '')) mensaje = 'La cuenta NO se ha borrado: falta desplegar la función «borrar-cuenta» en Supabase (ver docs/BORRAR-CUENTA.md).';
+    throw new Error(mensaje ?? 'La cuenta NO se ha borrado: no se ha podido conectar con el servidor.');
+  }
+  await cliente.auth.signOut({ scope: 'local' }).catch(() => {});
+  await limpiarDispositivo();
+  location.replace(location.pathname);
+}
+
 /** Pide confirmación (avisando si hay cambios sin subir) y cierra la sesión. */
 export async function confirmarCierreDeSesion() {
   const { pendientes } = await import('./sync/cola.js');

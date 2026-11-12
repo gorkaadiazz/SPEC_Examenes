@@ -61,8 +61,9 @@ export async function temasPorEvaluacion() {
  * Guarda una evaluación con su lista de temas (los que ya no estén se borran).
  * @param {object} evaluacion
  * @param {Array<{id?:string, texto:string, estudiado:boolean}>} temas
+ * @param {Array<{ra_id:string, peso:number}>} [ras]  RA que evalúa
  */
-export async function guardar(evaluacion, temas = null) {
+export async function guardar(evaluacion, temas = null, ras = null) {
   const fila = preparar(evaluacion);
   const ops = [{ tabla: 'evaluaciones', op: 'upsert', fila }];
   if (temas) {
@@ -74,6 +75,17 @@ export async function guardar(evaluacion, temas = null) {
     temas.forEach((t, i) => {
       ops.push({ tabla: 'temas', op: 'upsert', fila: preparar({ ...t, evaluacion_id: fila.id, orden: i }) });
     });
+  }
+  if (ras) {
+    // RA que evalúa (y su peso dentro de cada RA): se quitan los desmarcados
+    const antes = evaluacion.id ? await db.porIndice('evaluacion_ra', 'evaluacion_id', evaluacion.id) : [];
+    for (const l of antes) {
+      if (!ras.some((r) => r.ra_id === l.ra_id)) ops.push({ tabla: 'evaluacion_ra', op: 'delete', id: l.id });
+    }
+    for (const r of ras) {
+      const previo = antes.find((l) => l.ra_id === r.ra_id) ?? {};
+      ops.push({ tabla: 'evaluacion_ra', op: 'upsert', fila: preparar({ ...previo, evaluacion_id: fila.id, ra_id: r.ra_id, peso: r.peso }) });
+    }
   }
   await escribir(ops);
   return fila;
@@ -96,4 +108,9 @@ export async function opsBorrarEvaluacion(id) {
 
 export async function borrar(id) {
   await escribir(await opsBorrarEvaluacion(id));
+}
+
+/** Vínculos con RA de una evaluación. */
+export function listarRA(evaluacionId) {
+  return db.porIndice('evaluacion_ra', 'evaluacion_id', evaluacionId);
 }

@@ -146,6 +146,7 @@ async function subirTrozo(tabla, entradas) {
   for (const e of entradas) {
     let fila = await db.obtener(tabla, e.id);
     if (!fila) continue; // ya no existe (se borró después): nada que subir
+    if (tabla === 'perfiles' && fila.id !== usuario.id) continue; // perfil del modo local: no se sube
     if (tabla === 'archivos' && !fila.ruta) fila = await subirContenido(fila);
     filas.push(limpiarFila(tabla, fila));
   }

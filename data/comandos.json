@@ -1,0 +1,787 @@
+[
+{
+"categoria": "Linux",
+"comando": "ls -la",
+"descripcion": "Lista archivos con permisos, incluidos los ocultos"
+},
+{
+"categoria": "Linux",
+"comando": "cd /ruta",
+"descripcion": "Cambia de carpeta"
+},
+{
+"categoria": "Linux",
+"comando": "pwd",
+"descripcion": "Muestra la carpeta actual"
+},
+{
+"categoria": "Linux",
+"comando": "cp -r origen destino",
+"descripcion": "Copia archivos o carpetas"
+},
+{
+"categoria": "Linux",
+"comando": "mv origen destino",
+"descripcion": "Mueve o renombra"
+},
+{
+"categoria": "Linux",
+"comando": "rm -r carpeta",
+"descripcion": "Borra una carpeta y su contenido"
+},
+{
+"categoria": "Linux",
+"comando": "mkdir -p a/b/c",
+"descripcion": "Crea carpetas (y las intermedias)"
+},
+{
+"categoria": "Linux",
+"comando": "cat archivo",
+"descripcion": "Muestra un archivo"
+},
+{
+"categoria": "Linux",
+"comando": "less archivo",
+"descripcion": "Muestra un archivo página a página"
+},
+{
+"categoria": "Linux",
+"comando": "tail -f /var/log/syslog",
+"descripcion": "Sigue un registro en directo"
+},
+{
+"categoria": "Linux",
+"comando": "grep -ri \"texto\" /ruta",
+"descripcion": "Busca texto en archivos"
+},
+{
+"categoria": "Linux",
+"comando": "find / -name \"*.conf\"",
+"descripcion": "Busca archivos por nombre"
+},
+{
+"categoria": "Linux",
+"comando": "chmod 750 archivo",
+"descripcion": "Cambia permisos (rwx r-x ---)"
+},
+{
+"categoria": "Linux",
+"comando": "chown usuario:grupo archivo",
+"descripcion": "Cambia el propietario"
+},
+{
+"categoria": "Linux",
+"comando": "sudo orden",
+"descripcion": "Ejecuta como administrador"
+},
+{
+"categoria": "Linux",
+"comando": "useradd -m -s /bin/bash ana",
+"descripcion": "Crea un usuario con carpeta personal"
+},
+{
+"categoria": "Linux",
+"comando": "passwd ana",
+"descripcion": "Cambia la contraseña de un usuario"
+},
+{
+"categoria": "Linux",
+"comando": "usermod -aG sudo ana",
+"descripcion": "Añade un usuario a un grupo"
+},
+{
+"categoria": "Linux",
+"comando": "groupadd alumnos",
+"descripcion": "Crea un grupo"
+},
+{
+"categoria": "Linux",
+"comando": "id ana",
+"descripcion": "Muestra los grupos de un usuario"
+},
+{
+"categoria": "Linux",
+"comando": "ip a",
+"descripcion": "Muestra las interfaces y sus IP"
+},
+{
+"categoria": "Linux",
+"comando": "ip route",
+"descripcion": "Muestra la tabla de rutas"
+},
+{
+"categoria": "Linux",
+"comando": "ping -c 4 8.8.8.8",
+"descripcion": "Comprueba la conexión"
+},
+{
+"categoria": "Linux",
+"comando": "ss -tulpn",
+"descripcion": "Puertos abiertos y qué programa los usa"
+},
+{
+"categoria": "Linux",
+"comando": "dig ejemplo.com",
+"descripcion": "Consulta DNS"
+},
+{
+"categoria": "Linux",
+"comando": "nslookup ejemplo.com",
+"descripcion": "Consulta DNS (clásico)"
+},
+{
+"categoria": "Linux",
+"comando": "traceroute ejemplo.com",
+"descripcion": "Ruta que siguen los paquetes"
+},
+{
+"categoria": "Linux",
+"comando": "systemctl status ssh",
+"descripcion": "Estado de un servicio"
+},
+{
+"categoria": "Linux",
+"comando": "systemctl restart apache2",
+"descripcion": "Reinicia un servicio"
+},
+{
+"categoria": "Linux",
+"comando": "systemctl enable --now nginx",
+"descripcion": "Activa un servicio ahora y al arrancar"
+},
+{
+"categoria": "Linux",
+"comando": "journalctl -u ssh -f",
+"descripcion": "Registros de un servicio en directo"
+},
+{
+"categoria": "Linux",
+"comando": "apt update && apt upgrade",
+"descripcion": "Actualiza los paquetes (Debian/Ubuntu)"
+},
+{
+"categoria": "Linux",
+"comando": "apt install paquete",
+"descripcion": "Instala un paquete"
+},
+{
+"categoria": "Linux",
+"comando": "df -h",
+"descripcion": "Espacio en disco"
+},
+{
+"categoria": "Linux",
+"comando": "du -sh carpeta",
+"descripcion": "Tamaño de una carpeta"
+},
+{
+"categoria": "Linux",
+"comando": "free -h",
+"descripcion": "Memoria libre"
+},
+{
+"categoria": "Linux",
+"comando": "top",
+"descripcion": "Procesos en directo"
+},
+{
+"categoria": "Linux",
+"comando": "ps aux | grep nombre",
+"descripcion": "Busca un proceso"
+},
+{
+"categoria": "Linux",
+"comando": "kill -9 PID",
+"descripcion": "Mata un proceso"
+},
+{
+"categoria": "Linux",
+"comando": "tar -czvf copia.tar.gz carpeta",
+"descripcion": "Comprime una carpeta"
+},
+{
+"categoria": "Linux",
+"comando": "tar -xzvf copia.tar.gz",
+"descripcion": "Descomprime"
+},
+{
+"categoria": "Linux",
+"comando": "scp archivo usuario@host:/ruta",
+"descripcion": "Copia un archivo por SSH"
+},
+{
+"categoria": "Linux",
+"comando": "ssh usuario@host",
+"descripcion": "Conecta por SSH"
+},
+{
+"categoria": "Linux",
+"comando": "ufw allow 22/tcp",
+"descripcion": "Abre un puerto en el cortafuegos"
+},
+{
+"categoria": "Linux",
+"comando": "iptables -L -n -v",
+"descripcion": "Lista las reglas del cortafuegos"
+},
+{
+"categoria": "Linux",
+"comando": "crontab -e",
+"descripcion": "Edita las tareas programadas"
+},
+{
+"categoria": "Linux",
+"comando": "mount /dev/sdb1 /mnt",
+"descripcion": "Monta una partición"
+},
+{
+"categoria": "Linux",
+"comando": "lsblk",
+"descripcion": "Lista discos y particiones"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "ipconfig /all",
+"descripcion": "Configuración de red completa"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "ipconfig /release  y  /renew",
+"descripcion": "Suelta y renueva la IP por DHCP"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "ipconfig /flushdns",
+"descripcion": "Vacía la caché DNS"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "ping -t 8.8.8.8",
+"descripcion": "Ping continuo"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "tracert ejemplo.com",
+"descripcion": "Ruta que siguen los paquetes"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "nslookup ejemplo.com",
+"descripcion": "Consulta DNS"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "netstat -ano",
+"descripcion": "Conexiones y puertos con su PID"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "Get-NetIPAddress",
+"descripcion": "IP de las interfaces"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "Test-NetConnection host -Port 443",
+"descripcion": "Comprueba si un puerto responde"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "Get-Service",
+"descripcion": "Lista los servicios"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "Restart-Service nombre",
+"descripcion": "Reinicia un servicio"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "Get-Process",
+"descripcion": "Lista los procesos"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "Stop-Process -Id 1234 -Force",
+"descripcion": "Mata un proceso"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "Get-ChildItem -Recurse",
+"descripcion": "Lista archivos y subcarpetas"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "Copy-Item origen destino -Recurse",
+"descripcion": "Copia archivos o carpetas"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "Get-Content archivo -Tail 20 -Wait",
+"descripcion": "Sigue un archivo de texto"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "Get-EventLog -LogName System -Newest 20",
+"descripcion": "Últimos eventos del sistema"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "New-LocalUser ana",
+"descripcion": "Crea un usuario local"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "Add-LocalGroupMember -Group Administradores -Member ana",
+"descripcion": "Añade un usuario a un grupo local"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "net user",
+"descripcion": "Lista los usuarios locales"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "net share",
+"descripcion": "Lista las carpetas compartidas"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "net use Z: \\\\servidor\\carpeta",
+"descripcion": "Conecta una unidad de red"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "icacls carpeta",
+"descripcion": "Muestra los permisos NTFS"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "sfc /scannow",
+"descripcion": "Repara archivos del sistema"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "chkdsk C: /f",
+"descripcion": "Comprueba y repara el disco"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "gpupdate /force",
+"descripcion": "Aplica las directivas de grupo ya"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "gpresult /r",
+"descripcion": "Directivas que se están aplicando"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "systeminfo",
+"descripcion": "Información del equipo"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "hostname",
+"descripcion": "Nombre del equipo"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "shutdown /r /t 0",
+"descripcion": "Reinicia ahora"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "Get-Help orden -Examples",
+"descripcion": "Ejemplos de uso de una orden"
+},
+{
+"categoria": "Windows / PowerShell",
+"comando": "Set-ExecutionPolicy RemoteSigned",
+"descripcion": "Permite ejecutar scripts propios"
+},
+{
+"categoria": "Active Directory",
+"comando": "Install-WindowsFeature AD-Domain-Services -IncludeManagementTools",
+"descripcion": "Instala el rol de AD DS"
+},
+{
+"categoria": "Active Directory",
+"comando": "Install-ADDSForest -DomainName aula.local",
+"descripcion": "Crea un bosque y un dominio nuevos"
+},
+{
+"categoria": "Active Directory",
+"comando": "Get-ADUser -Filter *",
+"descripcion": "Lista los usuarios del dominio"
+},
+{
+"categoria": "Active Directory",
+"comando": "New-ADUser -Name \"Ana Ruiz\" -SamAccountName aruiz -Enabled $true -AccountPassword (Read-Host -AsSecureString)",
+"descripcion": "Crea un usuario"
+},
+{
+"categoria": "Active Directory",
+"comando": "Set-ADAccountPassword aruiz -Reset",
+"descripcion": "Restablece una contraseña"
+},
+{
+"categoria": "Active Directory",
+"comando": "Unlock-ADAccount aruiz",
+"descripcion": "Desbloquea una cuenta"
+},
+{
+"categoria": "Active Directory",
+"comando": "Disable-ADAccount aruiz",
+"descripcion": "Deshabilita una cuenta"
+},
+{
+"categoria": "Active Directory",
+"comando": "New-ADGroup -Name Alumnos -GroupScope Global",
+"descripcion": "Crea un grupo"
+},
+{
+"categoria": "Active Directory",
+"comando": "Add-ADGroupMember Alumnos -Members aruiz",
+"descripcion": "Añade un usuario a un grupo"
+},
+{
+"categoria": "Active Directory",
+"comando": "Get-ADGroupMember Alumnos",
+"descripcion": "Miembros de un grupo"
+},
+{
+"categoria": "Active Directory",
+"comando": "New-ADOrganizationalUnit -Name Aula1",
+"descripcion": "Crea una unidad organizativa"
+},
+{
+"categoria": "Active Directory",
+"comando": "Move-ADObject \"CN=Ana Ruiz,CN=Users,DC=aula,DC=local\" -TargetPath \"OU=Aula1,DC=aula,DC=local\"",
+"descripcion": "Mueve un objeto a otra OU"
+},
+{
+"categoria": "Active Directory",
+"comando": "Get-ADComputer -Filter *",
+"descripcion": "Lista los equipos del dominio"
+},
+{
+"categoria": "Active Directory",
+"comando": "Add-Computer -DomainName aula.local -Restart",
+"descripcion": "Une el equipo al dominio"
+},
+{
+"categoria": "Active Directory",
+"comando": "dcdiag",
+"descripcion": "Diagnóstico del controlador de dominio"
+},
+{
+"categoria": "Active Directory",
+"comando": "repadmin /replsummary",
+"descripcion": "Resumen de la replicación"
+},
+{
+"categoria": "Active Directory",
+"comando": "nltest /dsgetdc:aula.local",
+"descripcion": "Localiza un controlador de dominio"
+},
+{
+"categoria": "Active Directory",
+"comando": "dsa.msc",
+"descripcion": "Abre Usuarios y equipos de Active Directory"
+},
+{
+"categoria": "Active Directory",
+"comando": "gpmc.msc",
+"descripcion": "Abre la consola de directivas de grupo"
+},
+{
+"categoria": "Cisco básico",
+"comando": "enable",
+"descripcion": "Entra en modo privilegiado"
+},
+{
+"categoria": "Cisco básico",
+"comando": "configure terminal",
+"descripcion": "Entra en modo de configuración global"
+},
+{
+"categoria": "Cisco básico",
+"comando": "hostname SW1",
+"descripcion": "Cambia el nombre del equipo"
+},
+{
+"categoria": "Cisco básico",
+"comando": "enable secret clave",
+"descripcion": "Contraseña cifrada del modo privilegiado"
+},
+{
+"categoria": "Cisco básico",
+"comando": "service password-encryption",
+"descripcion": "Cifra las contraseñas en texto claro"
+},
+{
+"categoria": "Cisco básico",
+"comando": "interface g0/1",
+"descripcion": "Entra en una interfaz"
+},
+{
+"categoria": "Cisco básico",
+"comando": "ip address 192.168.1.1 255.255.255.0",
+"descripcion": "Pone IP a la interfaz"
+},
+{
+"categoria": "Cisco básico",
+"comando": "no shutdown",
+"descripcion": "Activa la interfaz"
+},
+{
+"categoria": "Cisco básico",
+"comando": "description Enlace a SW2",
+"descripcion": "Describe la interfaz"
+},
+{
+"categoria": "Cisco básico",
+"comando": "vlan 10  /  name Alumnos",
+"descripcion": "Crea una VLAN y le pone nombre"
+},
+{
+"categoria": "Cisco básico",
+"comando": "switchport mode access",
+"descripcion": "Puerto de acceso"
+},
+{
+"categoria": "Cisco básico",
+"comando": "switchport access vlan 10",
+"descripcion": "Asigna el puerto a una VLAN"
+},
+{
+"categoria": "Cisco básico",
+"comando": "switchport mode trunk",
+"descripcion": "Puerto troncal"
+},
+{
+"categoria": "Cisco básico",
+"comando": "switchport trunk allowed vlan 10,20",
+"descripcion": "VLAN permitidas en el troncal"
+},
+{
+"categoria": "Cisco básico",
+"comando": "interface g0/0.10  /  encapsulation dot1Q 10",
+"descripcion": "Subinterfaz para enrutar una VLAN"
+},
+{
+"categoria": "Cisco básico",
+"comando": "ip route 0.0.0.0 0.0.0.0 10.0.0.1",
+"descripcion": "Ruta por defecto"
+},
+{
+"categoria": "Cisco básico",
+"comando": "ip dhcp pool LAN  /  network 192.168.1.0 255.255.255.0",
+"descripcion": "Servidor DHCP en el router"
+},
+{
+"categoria": "Cisco básico",
+"comando": "line vty 0 4  /  transport input ssh",
+"descripcion": "Acceso remoto solo por SSH"
+},
+{
+"categoria": "Cisco básico",
+"comando": "show running-config",
+"descripcion": "Configuración en uso"
+},
+{
+"categoria": "Cisco básico",
+"comando": "show ip interface brief",
+"descripcion": "Resumen de interfaces e IP"
+},
+{
+"categoria": "Cisco básico",
+"comando": "show vlan brief",
+"descripcion": "VLAN y sus puertos"
+},
+{
+"categoria": "Cisco básico",
+"comando": "show interfaces trunk",
+"descripcion": "Enlaces troncales"
+},
+{
+"categoria": "Cisco básico",
+"comando": "show ip route",
+"descripcion": "Tabla de rutas"
+},
+{
+"categoria": "Cisco básico",
+"comando": "show mac address-table",
+"descripcion": "Tabla de direcciones MAC"
+},
+{
+"categoria": "Cisco básico",
+"comando": "copy running-config startup-config",
+"descripcion": "Guarda la configuración"
+},
+{
+"categoria": "Cisco básico",
+"comando": "reload",
+"descripcion": "Reinicia el equipo"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "VBoxManage list vms",
+"descripcion": "Lista las máquinas de VirtualBox"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "VBoxManage startvm \"nombre\" --type headless",
+"descripcion": "Arranca una máquina sin ventana"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "VBoxManage controlvm \"nombre\" poweroff",
+"descripcion": "Apaga una máquina"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "VBoxManage snapshot \"nombre\" take antes",
+"descripcion": "Crea una instantánea"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "VBoxManage snapshot \"nombre\" restore antes",
+"descripcion": "Vuelve a una instantánea"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "VBoxManage clonevm \"nombre\" --name copia --register",
+"descripcion": "Clona una máquina"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "VBoxManage modifyvm \"nombre\" --memory 4096 --cpus 2",
+"descripcion": "Cambia memoria y CPU"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "qm list",
+"descripcion": "Lista las máquinas de Proxmox"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "qm start 100",
+"descripcion": "Arranca la máquina 100"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "qm shutdown 100",
+"descripcion": "Apaga la máquina 100"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "qm snapshot 100 antes",
+"descripcion": "Crea una instantánea"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "qm clone 100 101 --name copia",
+"descripcion": "Clona una máquina"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "qm config 100",
+"descripcion": "Muestra la configuración"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "pct list",
+"descripcion": "Lista los contenedores LXC de Proxmox"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "pct enter 200",
+"descripcion": "Entra en un contenedor"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "docker ps -a",
+"descripcion": "Lista los contenedores"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "docker images",
+"descripcion": "Lista las imágenes"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "docker run -d --name web -p 8080:80 nginx",
+"descripcion": "Crea y arranca un contenedor"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "docker exec -it web bash",
+"descripcion": "Abre una terminal dentro del contenedor"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "docker logs -f web",
+"descripcion": "Registros en directo"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "docker stop web && docker rm web",
+"descripcion": "Para y borra un contenedor"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "docker build -t miimagen .",
+"descripcion": "Construye una imagen desde un Dockerfile"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "docker compose up -d",
+"descripcion": "Levanta los servicios de docker-compose.yml"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "docker compose down",
+"descripcion": "Para y borra los servicios"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "docker volume ls",
+"descripcion": "Lista los volúmenes"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "docker network ls",
+"descripcion": "Lista las redes"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "docker system prune",
+"descripcion": "Borra lo que no se usa"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "virsh list --all",
+"descripcion": "Lista las máquinas de KVM/libvirt"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "virsh start nombre",
+"descripcion": "Arranca una máquina"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "virsh shutdown nombre",
+"descripcion": "Apaga una máquina"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "virsh snapshot-create-as nombre antes",
+"descripcion": "Crea una instantánea"
+},
+{
+"categoria": "Virtualización y nube",
+"comando": "virsh dominfo nombre",
+"descripcion": "Información de una máquina"
+}
+]

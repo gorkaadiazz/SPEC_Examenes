@@ -3,11 +3,15 @@
 PWA para organizar exámenes, prácticas, notas por RA y faltas de 2º de SMR.
 La especificación completa está en [SPEC.md](SPEC.md).
 
-**Estado:** fases 1, 2, 3 y 6 hechas: base local con IndexedDB, PWA instalable,
-login con Google, sincronización con Supabase y examen de práctica con IA.
-Para activar la IA sigue **[docs/FASE6-IA.md](docs/FASE6-IA.md)**.
+**Estado:** terminada (versión 1.0). Incluye: evaluaciones con temas y apuntes,
+notas por RA con «¿qué necesito?» y simulador, faltas, calendario con
+exportación .ics, herramientas de redes, Formación en Empresa, examen de
+práctica (importado en JSON, sin IA), flashcards, Pomodoro, avisos, copia de
+seguridad, login con Google y sincronización con Supabase.
 
-Para conectar Supabase y Google sigue **[docs/FASE3-SUPABASE.md](docs/FASE3-SUPABASE.md)**.
+- Poner en marcha Supabase y Google: **[docs/FASE3-SUPABASE.md](docs/FASE3-SUPABASE.md)**.
+- Activar «Borrar mi cuenta»: **[docs/BORRAR-CUENTA.md](docs/BORRAR-CUENTA.md)**.
+
 Mientras `js/config.js` no tenga la URL y la clave pública de Supabase, la app
 funciona en «modo local» (sin cuenta y con los datos solo en ese dispositivo).
 
@@ -49,11 +53,13 @@ segunda vez).
 
 - `js/sync/`: copia local en IndexedDB, cola de cambios y sincronización con Supabase.
 - `js/repos/`: acceso a los datos (lo único que tocan las vistas).
-- `js/ui/`: pantallas. `js/utils/`: fechas, DOM, tema.
+- `js/ui/`: pantallas. `js/utils/`: fechas, DOM, tema, .ics, copias, avisos.
+- `js/notas.js`: cálculo de notas por RA y faltas. `js/tools/`: subredes y repaso de flashcards.
 - `js/supabase.js`, `js/auth.js`: cliente de Supabase y login con Google.
 - `lib/`: supabase-js servido en local.
 - `supabase/migrations/`: tablas, RLS, Storage y lista de emails permitidos.
-- `data/`: módulos precargados.
+- `supabase/functions/borrar-cuenta/`: función que borra la cuenta.
+- `data/`: módulos precargados, puertos y comandos.
 
 Nunca se guardan claves secretas en este repositorio: en `js/config.js` solo van
 la URL y la clave pública (anon/publishable) de Supabase.

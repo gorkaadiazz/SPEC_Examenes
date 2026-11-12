@@ -1,0 +1,302 @@
+[
+{
+"puerto": 20,
+"protocolo": "TCP",
+"servicio": "FTP (datos)",
+"descripcion": "Transferencia de archivos, canal de datos"
+},
+{
+"puerto": 21,
+"protocolo": "TCP",
+"servicio": "FTP (control)",
+"descripcion": "Transferencia de archivos, canal de órdenes"
+},
+{
+"puerto": 22,
+"protocolo": "TCP",
+"servicio": "SSH / SFTP",
+"descripcion": "Terminal remota segura y copia de archivos"
+},
+{
+"puerto": 23,
+"protocolo": "TCP",
+"servicio": "Telnet",
+"descripcion": "Terminal remota sin cifrar (no usar)"
+},
+{
+"puerto": 25,
+"protocolo": "TCP",
+"servicio": "SMTP",
+"descripcion": "Envío de correo entre servidores"
+},
+{
+"puerto": 53,
+"protocolo": "TCP/UDP",
+"servicio": "DNS",
+"descripcion": "Resolución de nombres"
+},
+{
+"puerto": 67,
+"protocolo": "UDP",
+"servicio": "DHCP (servidor)",
+"descripcion": "Asignación automática de IP"
+},
+{
+"puerto": 68,
+"protocolo": "UDP",
+"servicio": "DHCP (cliente)",
+"descripcion": "Asignación automática de IP"
+},
+{
+"puerto": 69,
+"protocolo": "UDP",
+"servicio": "TFTP",
+"descripcion": "Transferencia simple de archivos (arranque por red)"
+},
+{
+"puerto": 80,
+"protocolo": "TCP",
+"servicio": "HTTP",
+"descripcion": "Web sin cifrar"
+},
+{
+"puerto": 88,
+"protocolo": "TCP/UDP",
+"servicio": "Kerberos",
+"descripcion": "Autenticación en Active Directory"
+},
+{
+"puerto": 110,
+"protocolo": "TCP",
+"servicio": "POP3",
+"descripcion": "Descarga de correo"
+},
+{
+"puerto": 123,
+"protocolo": "UDP",
+"servicio": "NTP",
+"descripcion": "Sincronización de la hora"
+},
+{
+"puerto": 135,
+"protocolo": "TCP",
+"servicio": "RPC",
+"descripcion": "Llamadas a procedimientos remotos de Windows"
+},
+{
+"puerto": 137,
+"protocolo": "UDP",
+"servicio": "NetBIOS (nombres)",
+"descripcion": "Resolución de nombres NetBIOS"
+},
+{
+"puerto": 138,
+"protocolo": "UDP",
+"servicio": "NetBIOS (datagramas)",
+"descripcion": "Exploración de red de Windows"
+},
+{
+"puerto": 139,
+"protocolo": "TCP",
+"servicio": "NetBIOS (sesión)",
+"descripcion": "Compartición de archivos antigua de Windows"
+},
+{
+"puerto": 143,
+"protocolo": "TCP",
+"servicio": "IMAP",
+"descripcion": "Correo sincronizado con el servidor"
+},
+{
+"puerto": 161,
+"protocolo": "UDP",
+"servicio": "SNMP",
+"descripcion": "Monitorización de dispositivos de red"
+},
+{
+"puerto": 162,
+"protocolo": "UDP",
+"servicio": "SNMP trap",
+"descripcion": "Alertas de dispositivos de red"
+},
+{
+"puerto": 389,
+"protocolo": "TCP/UDP",
+"servicio": "LDAP",
+"descripcion": "Directorio (Active Directory, OpenLDAP)"
+},
+{
+"puerto": 443,
+"protocolo": "TCP",
+"servicio": "HTTPS",
+"descripcion": "Web cifrada con TLS"
+},
+{
+"puerto": 445,
+"protocolo": "TCP",
+"servicio": "SMB",
+"descripcion": "Carpetas e impresoras compartidas de Windows"
+},
+{
+"puerto": 465,
+"protocolo": "TCP",
+"servicio": "SMTPS",
+"descripcion": "Envío de correo cifrado"
+},
+{
+"puerto": 514,
+"protocolo": "UDP",
+"servicio": "Syslog",
+"descripcion": "Envío de registros a un servidor"
+},
+{
+"puerto": 587,
+"protocolo": "TCP",
+"servicio": "SMTP (envío)",
+"descripcion": "Envío de correo desde el cliente con autenticación"
+},
+{
+"puerto": 631,
+"protocolo": "TCP",
+"servicio": "IPP / CUPS",
+"descripcion": "Impresión en red"
+},
+{
+"puerto": 636,
+"protocolo": "TCP",
+"servicio": "LDAPS",
+"descripcion": "LDAP cifrado"
+},
+{
+"puerto": 993,
+"protocolo": "TCP",
+"servicio": "IMAPS",
+"descripcion": "IMAP cifrado"
+},
+{
+"puerto": 995,
+"protocolo": "TCP",
+"servicio": "POP3S",
+"descripcion": "POP3 cifrado"
+},
+{
+"puerto": 1194,
+"protocolo": "UDP",
+"servicio": "OpenVPN",
+"descripcion": "Red privada virtual"
+},
+{
+"puerto": 1433,
+"protocolo": "TCP",
+"servicio": "SQL Server",
+"descripcion": "Base de datos de Microsoft"
+},
+{
+"puerto": 1521,
+"protocolo": "TCP",
+"servicio": "Oracle",
+"descripcion": "Base de datos Oracle"
+},
+{
+"puerto": 2049,
+"protocolo": "TCP/UDP",
+"servicio": "NFS",
+"descripcion": "Carpetas compartidas en Linux/Unix"
+},
+{
+"puerto": 2375,
+"protocolo": "TCP",
+"servicio": "Docker (sin TLS)",
+"descripcion": "API de Docker sin cifrar (no exponer)"
+},
+{
+"puerto": 2376,
+"protocolo": "TCP",
+"servicio": "Docker (TLS)",
+"descripcion": "API de Docker cifrada"
+},
+{
+"puerto": 3128,
+"protocolo": "TCP",
+"servicio": "Squid",
+"descripcion": "Proxy web"
+},
+{
+"puerto": 3306,
+"protocolo": "TCP",
+"servicio": "MySQL / MariaDB",
+"descripcion": "Base de datos"
+},
+{
+"puerto": 3389,
+"protocolo": "TCP",
+"servicio": "RDP",
+"descripcion": "Escritorio remoto de Windows"
+},
+{
+"puerto": 5060,
+"protocolo": "TCP/UDP",
+"servicio": "SIP",
+"descripcion": "Telefonía IP"
+},
+{
+"puerto": 5432,
+"protocolo": "TCP",
+"servicio": "PostgreSQL",
+"descripcion": "Base de datos"
+},
+{
+"puerto": 5900,
+"protocolo": "TCP",
+"servicio": "VNC",
+"descripcion": "Escritorio remoto"
+},
+{
+"puerto": 5985,
+"protocolo": "TCP",
+"servicio": "WinRM (HTTP)",
+"descripcion": "Administración remota de Windows / PowerShell"
+},
+{
+"puerto": 5986,
+"protocolo": "TCP",
+"servicio": "WinRM (HTTPS)",
+"descripcion": "Administración remota de Windows cifrada"
+},
+{
+"puerto": 6379,
+"protocolo": "TCP",
+"servicio": "Redis",
+"descripcion": "Base de datos en memoria"
+},
+{
+"puerto": 8006,
+"protocolo": "TCP",
+"servicio": "Proxmox VE",
+"descripcion": "Panel web de Proxmox"
+},
+{
+"puerto": 8080,
+"protocolo": "TCP",
+"servicio": "HTTP alternativo",
+"descripcion": "Servidores web y proxies de pruebas"
+},
+{
+"puerto": 8443,
+"protocolo": "TCP",
+"servicio": "HTTPS alternativo",
+"descripcion": "Paneles web de administración"
+},
+{
+"puerto": 9100,
+"protocolo": "TCP",
+"servicio": "Impresión RAW",
+"descripcion": "Impresoras de red (JetDirect)"
+},
+{
+"puerto": 51820,
+"protocolo": "UDP",
+"servicio": "WireGuard",
+"descripcion": "Red privada virtual"
+}
+]
